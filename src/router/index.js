@@ -1,4 +1,4 @@
-import { createRouter, createMemoryHistory } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
   {
@@ -7,13 +7,19 @@ const routes = [
     component: () => import("../views/Home-view.vue"),
   },
   {
-    path: "/about",
-    name: "about",
+    path: "/login",
+    name: "login",
+    component: () => import("../views/Login-view.vue"),
+  },
+  {
+    path: "/registration",
+    name: "registration",
+    component: () => import("../views/Registration-view.vue"),
   },
 ];
 
 const router = createRouter({
-  history: createMemoryHistory(),
+  history: createWebHistory(),
   routes,
 });
 

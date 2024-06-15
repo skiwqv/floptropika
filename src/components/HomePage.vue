@@ -1,47 +1,49 @@
 <template>
-  <div ref="text">ВЫ ЗАБЛОКИРОВАНЫ!!!</div>
-  <img
-    src="../assets/images/dula.png"
-    alt="jiafei image"
-    class="image"
-    ref="jiafei"
-  />
+  <div class="wrapper">
+    <div class="text">ТЫ ШЛЮХА!!</div>
+    <img
+      ref="image"
+      src="../assets/images/jiafei.png"
+      alt="image"
+      class="image"
+    />
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import gsap from "gsap";
-// import apiClient from "../api.js";
-const jiafei = ref("jiafei");
-const text = ref("text");
+
+const image = ref(null);
+
 const anim = () => {
-  gsap.to(jiafei.value, {
+  gsap.to(image.value, {
     repeat: -1,
-    scaleY: -2,
-    scaleX: 1,
-    rotate: 190,
-    duration: 1,
     yoyo: true,
-  });
-  gsap.set(text.value, {
-    repeat: -1,
-    scaleY: 4,
-    scaleX: 2,
-    rotate: 23,
-    y: 90,
+    scaleY: -1.3,
+    y: 100,
+    rotation: 360,
+    x: -190,
+    duration: 1,
   });
 };
-
 onMounted(() => {
   anim();
-  // apiClient.get();
 });
 </script>
 
-<style>
+<style scoped>
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.text {
+  font-size: 90px;
+  color: white;
+}
 .image {
-  margin-top: 200px;
-  max-width: 400px;
-  max-height: 400px;
+  width: 300px;
+  height: auto;
 }
 </style>
