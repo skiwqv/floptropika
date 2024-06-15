@@ -2,6 +2,8 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 
+import { createPinia } from "pinia";
+const pinia = createPinia();
 import "@/assets/css/style.css";
 
 import { gsap } from "gsap";
@@ -35,4 +37,4 @@ gsap.registerPlugin(
   CustomEase
 );
 
-createApp(App).use(router).use(gsap).mount("#app");
+createApp(App).use(router).use(gsap).use(pinia).mount("#app");

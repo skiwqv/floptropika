@@ -1,27 +1,25 @@
 <template>
   <div class="login__wrapper">
-    <form class="login">
-      <h3>FLOPTROPIKA</h3>
+    <form class="login" @submit.prevent="login">
+      <h3 ref="text">FLOPTROPIKA</h3>
       <input
         v-model="user.username"
         type="text"
         placeholder="Username"
         class="login__input"
+        ref="usernameInput"
       />
       <input
         v-model="user.password"
         type="password"
         placeholder="Password"
         class="login__input"
+        ref="passwordInput"
       />
-      <button
-        class="login__button"
-        @click.prevent="login"
-        :disabled="isDisabled"
-      >
+      <button class="login__button" :disabled="isDisabled" ref="loginButton">
         Login
       </button>
-      <p class="login__register">
+      <p class="login__register" ref="description">
         Don't have an account?
         <router-link to="/registration">Register here</router-link>
       </p>
@@ -30,20 +28,49 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import gsap from "gsap";
+import { useAppStore } from "@/store/app.js";
 
+const appStore = useAppStore();
 const user = ref({
   username: "",
   password: "",
 });
 
+const currentUser = computed(() => appStore.getUser);
+
+const text = ref(null);
+const usernameInput = ref(null);
+const passwordInput = ref(null);
+const loginButton = ref(null);
+const description = ref(null);
 const isDisabled = computed(() => {
   return !(user.value.username !== "" && user.value.password !== "");
 });
 
-const login = () => {
-  console.log("user", user.value);
+const loginAnim = () => {
+  const tl = gsap.timeline();
+
+  tl.from(text.value, { x: -50, opacity: 0, duration: 0.5 })
+    .from(usernameInput.value, { x: -50, opacity: 0, duration: 0.5 }, "-=0.3")
+    .from(passwordInput.value, { x: -50, opacity: 0, duration: 0.5 }, "-=0.3")
+    .from(loginButton.value, { x: -50, opacity: 0, duration: 0.5 }, "-=0.3")
+    .from(description.value, { x: -50, opacity: 0, duration: 0.5 }, "-=0.3");
 };
+
+const login = async () => {
+  const response = await appStore.signIn(user.value);
+  if (response && response.status === 200) {
+    console.log("User logged in", currentUser.value);
+  } else {
+    console.error("Login failed");
+  }
+};
+
+onMounted(() => {
+  loginAnim();
+});
 </script>
 
 <style scoped>
@@ -81,6 +108,7 @@ const login = () => {
 .login__input:focus {
   box-shadow: 0 0 10px rgba(242, 0, 145, 0.8);
 }
+
 .login__button {
   background-color: #2596be;
   color: white;
@@ -96,6 +124,7 @@ const login = () => {
 .login__button:hover {
   background-color: #10aae2;
 }
+
 .login__button:disabled {
   background-color: #ccc;
   color: #999;

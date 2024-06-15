@@ -16,10 +16,17 @@
       active-class="header__button_active"
       >Login</router-link
     >
+    <div v-if="currentUser">{{ currentUser.user.username }}</div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { computed } from "vue";
+import { useAppStore } from "@/store/app.js";
+
+const appStore = useAppStore();
+const currentUser = computed(() => appStore.getUser);
+</script>
 
 <style scoped>
 .header {

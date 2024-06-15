@@ -30,6 +30,11 @@
         class="login__input"
         required
       />
+      <div
+        v-confetti="{ particleCount: 200, force: 1 }"
+        class="confetti"
+        v-if="isVisible"
+      ></div>
       <button
         @click.prevent="register"
         class="login__button"
@@ -43,13 +48,14 @@
 
 <script setup>
 import { ref, computed } from "vue";
-
+import apiClient from "@/api";
+import { vConfetti } from "@neoconfetti/vue";
 const user = ref({
   username: "",
   email: "",
   password: "",
 });
-
+const isVisible = ref(false);
 const confirmPassword = ref("");
 
 const isDisabled = computed(() => {
@@ -61,8 +67,10 @@ const isDisabled = computed(() => {
   );
 });
 
-const register = () => {
-  console.log("user", user.value);
+const register = async () => {
+  const userBack = await apiClient.post("/users/register/", user.value);
+  console.log("user from backend", userBack.data);
+  isVisible.value = true;
 };
 </script>
 
