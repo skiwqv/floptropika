@@ -1,17 +1,13 @@
 <template>
-  <div>{{ dataFromBase }}</div>
+  <div>{{ currentUser }}</div>
 </template>
 
 <script setup>
-import apiClient from "@/api";
-import { ref, onMounted } from "vue";
-const dataFromBase = ref(null);
+import { useAppStore } from "@/store/app";
+import { computed } from "vue";
+const appStore = useAppStore();
 
-onMounted(async () => {
-  const resp = await apiClient.get("");
-  dataFromBase.value = resp.data;
-  console.log("asdsad", dataFromBase.value);
-});
+const currentUser = computed(() => appStore.getUser);
 </script>
 
 <style scoped>

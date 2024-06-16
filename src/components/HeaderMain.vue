@@ -11,13 +11,19 @@
       <router-link to="/" class="header__link">About us</router-link>
     </div>
     <router-link
-      v-if="!token"
       to="/login"
       class="header__button"
       active-class="header__button_active"
       >Login</router-link
     >
-    <div v-if="currentUser">{{ currentUser.user.username }}</div>
+    <router-link
+      to="/login"
+      class="header__button"
+      active-class="header__button_active"
+      >Logout</router-link
+    >
+    <div v-if="currentUser">{{ currentUser.username }}</div>
+    <div>{{ currentUser }}</div>
     <div>{{ token }}</div>
   </div>
 </template>

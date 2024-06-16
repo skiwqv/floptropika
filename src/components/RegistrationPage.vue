@@ -48,8 +48,10 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import apiClient from "@/api";
 import { vConfetti } from "@neoconfetti/vue";
+import { useAppStore } from "@/store/app";
+const appStore = useAppStore();
+
 const user = ref({
   username: "",
   email: "",
@@ -68,9 +70,11 @@ const isDisabled = computed(() => {
 });
 
 const register = async () => {
-  const userBack = await apiClient.post("/users/register/", user.value);
-  console.log("user from backend", userBack.data);
-  isVisible.value = true;
+  const response = await appStore.register(user.value);
+  if (response && response.status === 200) {
+    isVisible.value = true;
+    return response;
+  }
 };
 </script>
 
