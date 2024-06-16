@@ -11,12 +11,14 @@
       <router-link to="/" class="header__link">About us</router-link>
     </div>
     <router-link
+      v-if="!token"
       to="/login"
       class="header__button"
       active-class="header__button_active"
       >Login</router-link
     >
     <div v-if="currentUser">{{ currentUser.user.username }}</div>
+    <div>{{ token }}</div>
   </div>
 </template>
 
@@ -26,6 +28,7 @@ import { useAppStore } from "@/store/app.js";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
+const token = computed(() => appStore.token);
 </script>
 
 <style scoped>
