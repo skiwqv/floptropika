@@ -31,14 +31,13 @@
 import { ref, computed, onMounted } from "vue";
 import gsap from "gsap";
 import { useAppStore } from "@/store/app.js";
+import router from "@/router";
 
 const appStore = useAppStore();
 const user = ref({
   username: "",
   password: "",
 });
-
-const currentUser = computed(() => appStore.getUser);
 
 const text = ref(null);
 const usernameInput = ref(null);
@@ -62,9 +61,7 @@ const loginAnim = () => {
 const login = async () => {
   const response = await appStore.signIn(user.value);
   if (response && response.status === 200) {
-    console.log("User logged in", currentUser.value);
-  } else {
-    console.error("Login failed");
+    router.push("/");
   }
 };
 

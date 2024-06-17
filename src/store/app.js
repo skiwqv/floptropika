@@ -28,7 +28,6 @@ export const useAppStore = defineStore("app", {
       try {
         const response = await apiClient.post("/api/login/", user);
         if (response.status === 200) {
-          console.log("resp", response);
           const getToken = await apiClient.post("/api/token/", user);
           const refreshToken = await apiClient.post(
             "/api/token/refresh/",
@@ -81,7 +80,6 @@ export const useAppStore = defineStore("app", {
           .split("; ")
           .find((row) => row.startsWith("refresh="))
           ?.split("=")[1] || "";
-      console.log("refresh logout", { refresh: refreshToken });
       this.isLoading = true;
       try {
         await apiClient.post("/api/logout/", { refresh: refreshToken });
@@ -98,11 +96,9 @@ export const useAppStore = defineStore("app", {
       }
     },
     async postLegend(legend) {
-      console.log(legend);
       this.isLoading = true;
       try {
         const flopusa = await apiClient.post("/flop/create/", legend);
-        console.log(flopusa.data);
       } finally {
         this.isLoading = false;
       }
@@ -112,7 +108,6 @@ export const useAppStore = defineStore("app", {
       try {
         const flopusa = await apiClient.get("/flop/all/");
         this.legends = flopusa.data;
-        console.log("store legends", this.legends);
         return flopusa;
       } finally {
         this.isLoading = false;

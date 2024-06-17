@@ -16,7 +16,6 @@ const legends = computed(() => appStore.getAllLegends);
 
 onMounted(async () => {
   await appStore.getLegends();
-  console.log(legends.value);
 });
 </script>
 
