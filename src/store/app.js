@@ -98,7 +98,7 @@ export const useAppStore = defineStore("app", {
     async postLegend(legend) {
       this.isLoading = true;
       try {
-        const flopusa = await apiClient.post("/flop/create/", legend);
+        await apiClient.post("/flop/create/", legend);
       } finally {
         this.isLoading = false;
       }
