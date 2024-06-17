@@ -16,6 +16,7 @@
       >
     </div>
     <router-link
+      v-if="!currentUser"
       to="/login"
       class="header__button"
       active-class="header__button_active"
@@ -28,8 +29,6 @@
       >Logout</router-link
     >
     <div v-if="currentUser">{{ currentUser.username }}</div>
-    <div>{{ currentUser }}</div>
-    <div>{{ token }}</div>
   </div>
 </template>
 
@@ -39,7 +38,6 @@ import { useAppStore } from "@/store/app.js";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
-const token = computed(() => appStore.token);
 </script>
 
 <style scoped>

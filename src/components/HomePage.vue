@@ -1,5 +1,10 @@
 <template>
-  <div>{{ currentUser }}</div>
+  <div class="wrapper">
+    <div class="text" v-if="currentUser">
+      Hi
+      <span>{{ currentUser.username }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -15,6 +20,7 @@ const currentUser = computed(() => appStore.getUser);
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
 }
 .text {
   font-size: 90px;

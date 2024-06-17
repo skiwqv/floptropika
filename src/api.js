@@ -11,7 +11,7 @@ apiClient.interceptors.request.use(
       .find((row) => row.startsWith("accessToken="))
       ?.split("=")[1];
     if (token) {
-      config.headers["Authorization"] = "JWT " + token;
+      config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
   },

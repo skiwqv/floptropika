@@ -15,19 +15,19 @@ export const useAppStore = defineStore("app", {
   actions: {
     async signIn(user) {
       try {
-        const response = await apiClient.post("/users/login/", user);
+        const response = await apiClient.post("/api/login/", user);
         if (response.status === 200) {
           console.log("resp", response);
-          const getToken = await apiClient.post("/users/obtain/", user);
+          const getToken = await apiClient.post("/api/token/", user);
           const refreshToken = await apiClient.post(
-            "/users/refresh/",
+            "/api/token/refresh/",
             getToken.data
           );
           document.cookie = `accessToken=${refreshToken.data.access};Secure;max-age=3600;`;
           document.cookie = `refreshToken=${getToken.data.refresh};Secure;max-age=3600;`;
           apiClient.defaults.headers.common[
             "Authorization"
-          ] = `JWT ${response.data.access}`;
+          ] = `Bearer ${response.data.access}`;
           this.currentUser = response.data.user;
         }
         return response;
@@ -37,14 +37,7 @@ export const useAppStore = defineStore("app", {
     },
     async register(user) {
       try {
-        const response = await apiClient.post("/users/register/", user);
-        if (response.status === 200) {
-          this.currentUser = response.data;
-          document.cookie = `token=${response.data.token};Secure;max-age=3600;`;
-          apiClient.defaults.headers.common[
-            "Authorization"
-          ] = `Bearer ${response.data.token}`;
-        }
+        const response = await apiClient.post("/api/register/", user);
         return response;
       } catch (error) {
         console.error("registration failed", error);
@@ -52,7 +45,7 @@ export const useAppStore = defineStore("app", {
     },
     async getCurrentUser() {
       try {
-        const response = await apiClient.get("/users/me/");
+        const response = await apiClient.get("/api/me/");
         this.currentUser = response.data;
         return response.data;
       } catch (error) {

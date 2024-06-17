@@ -50,6 +50,7 @@
 import { ref, computed } from "vue";
 import { vConfetti } from "@neoconfetti/vue";
 import { useAppStore } from "@/store/app";
+import router from "@/router";
 const appStore = useAppStore();
 
 const user = ref({
@@ -73,6 +74,7 @@ const register = async () => {
   const response = await appStore.register(user.value);
   if (response && response.status === 200) {
     isVisible.value = true;
+    router.push("/login");
     return response;
   }
 };
