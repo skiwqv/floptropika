@@ -8,7 +8,12 @@
         class="header__link"
         >Home</router-link
       >
-      <router-link to="/" class="header__link">About us</router-link>
+      <router-link
+        to="/about"
+        class="header__link"
+        active-class="header__link_active"
+        >About us</router-link
+      >
     </div>
     <router-link
       to="/login"
