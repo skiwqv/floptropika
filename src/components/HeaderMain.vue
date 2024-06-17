@@ -14,6 +14,13 @@
         active-class="header__link_active"
         >About us</router-link
       >
+      <router-link
+        v-if="currentUser"
+        to="/postLegend"
+        class="header__link"
+        active-class="header__link_active"
+        >Post Legend</router-link
+      >
     </div>
     <router-link
       v-if="!currentUser"
@@ -22,12 +29,14 @@
       active-class="header__button_active"
       >Login</router-link
     >
-    <router-link
-      to="/login"
+    <button
+      v-if="currentUser"
       class="header__button"
       active-class="header__button_active"
-      >Logout</router-link
+      @click="logOut"
     >
+      Logout
+    </button>
     <div v-if="currentUser">{{ currentUser.username }}</div>
   </div>
 </template>
@@ -35,9 +44,14 @@
 <script setup>
 import { computed } from "vue";
 import { useAppStore } from "@/store/app.js";
+import router from "@/router";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
+const logOut = async () => {
+  await appStore.logout();
+  router.push("/");
+};
 </script>
 
 <style scoped>

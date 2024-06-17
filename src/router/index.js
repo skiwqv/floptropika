@@ -21,6 +21,11 @@ const routes = [
     name: "about",
     component: () => import("../views/About-view.vue"),
   },
+  {
+    path: "/postLegend",
+    name: "postLegend",
+    component: () => import("../views/PostLegend-view.vue"),
+  },
 ];
 
 const router = createRouter({

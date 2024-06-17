@@ -1,16 +1,20 @@
 import apiClient from "@/api";
 import { defineStore } from "pinia";
+import delete_cookie from "@/utils/utils.js";
 
 export const useAppStore = defineStore("app", {
   state: () => ({
     currentUser: null,
-    token: document.cookie
+    accessToken: document.cookie
       .split("; ")
-      .find((row) => row.startsWith("token="))
+      .find((row) => row.startsWith("access="))
       ?.split("=")[1],
+    refreshToken: "",
+    legends: null,
   }),
   getters: {
     getUser: (state) => state.currentUser,
+    getAllLegends: (state) => state.legends,
   },
   actions: {
     async signIn(user) {
@@ -23,8 +27,9 @@ export const useAppStore = defineStore("app", {
             "/api/token/refresh/",
             getToken.data
           );
-          document.cookie = `accessToken=${refreshToken.data.access};Secure;max-age=3600;`;
-          document.cookie = `refreshToken=${getToken.data.refresh};Secure;max-age=3600;`;
+          this.refreshToken = getToken.data.refresh;
+          document.cookie = `access=${refreshToken.data.access};Secure;max-age=86400;`;
+          document.cookie = `refresh=${getToken.data.refresh};Secure;max-age=86400;`;
           apiClient.defaults.headers.common[
             "Authorization"
           ] = `Bearer ${response.data.access}`;
@@ -44,13 +49,41 @@ export const useAppStore = defineStore("app", {
       }
     },
     async getCurrentUser() {
-      try {
-        const response = await apiClient.get("/api/me/");
-        this.currentUser = response.data;
-        return response.data;
-      } catch (error) {
-        console.error("Fetching current user failed", error);
+      if (this.accessToken) {
+        try {
+          const response = await apiClient.get("/api/me/");
+          this.currentUser = response.data;
+          return response.data;
+        } catch (error) {
+          console.error("Fetching current user failed", error);
+        }
       }
+    },
+    async logout() {
+      const refreshToken = {
+        refresh: this.refreshToken,
+      };
+      console.log("refresh logout", refreshToken);
+      try {
+        await apiClient.post("/api/logout/", refreshToken);
+        this.currentUser = "";
+        delete_cookie("access");
+        delete_cookie("refresh");
+        return true;
+      } catch (error) {
+        throw error.response.data;
+      }
+    },
+    async postLegend(legend) {
+      console.log(legend);
+      const flopusa = await apiClient.post("/flop/create/", legend);
+      console.log(flopusa.data);
+    },
+    async getLegends() {
+      const flopusa = await apiClient.get("/flop/all/");
+      this.legends = flopusa.data;
+      console.log("store legends", this.legends);
+      return flopusa;
     },
   },
 });
