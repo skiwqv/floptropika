@@ -59,6 +59,7 @@ const loginAnim = () => {
 };
 
 const login = async () => {
+  appStore.playSound();
   const response = await appStore.signIn(user.value);
   if (response && response.status === 200) {
     router.push("/");

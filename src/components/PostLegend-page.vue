@@ -46,6 +46,7 @@ const isDisabled = computed(() => {
 });
 
 const logLegend = async () => {
+  appStore.playSound();
   await appStore.postLegend(legend.value);
 };
 

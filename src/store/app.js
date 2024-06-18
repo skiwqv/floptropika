@@ -113,5 +113,9 @@ export const useAppStore = defineStore("app", {
         this.isLoading = false;
       }
     },
+    playSound() {
+      const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+      audio.play();
+    },
   },
 });
