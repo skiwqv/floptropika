@@ -31,6 +31,8 @@
       {{ currentUser.username }}
       <span class="arrow">&#9662;</span>
       <div v-if="isDropdownVisible" class="dropdown">
+        <button @click="toProfile">Profile</button>
+        <button @click="logOut">My Legends</button>
         <button @click="logOut">Logout</button>
       </div>
     </div>
@@ -52,6 +54,9 @@ const toggleDropdown = () => {
 
 const toHome = () => {
   router.push("/");
+};
+const toProfile = () => {
+  router.push(`/profile/${currentUser.value.id}`);
 };
 
 const logOut = async () => {
@@ -146,6 +151,8 @@ const logOut = async () => {
 
 .dropdown {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   background-color: white;
   border: 1px solid #ccc;
   right: 0;
@@ -154,6 +161,7 @@ const logOut = async () => {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   padding: 10px;
   margin-top: 10px;
+  max-width: 200px;
 }
 
 .dropdown button {
@@ -166,6 +174,7 @@ const logOut = async () => {
   color: black;
   text-decoration: none;
   transition: background-color 0.3s, box-shadow 0.3s;
+  margin-top: 10px;
 }
 
 .dropdown button:hover {

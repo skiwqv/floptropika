@@ -26,6 +26,11 @@ const routes = [
     name: "postLegend",
     component: () => import("../views/PostLegend-view.vue"),
   },
+  {
+    path: "/profile/:userId",
+    name: "profle",
+    component: () => import("../views/Profile-view.vue"),
+  },
 ];
 
 const router = createRouter({

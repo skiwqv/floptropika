@@ -16,6 +16,24 @@
         class="login__input"
         ref="passwordInput"
       />
+      <button type="button" class="upload-button" @click="triggerFileInput">
+        Choose Image
+      </button>
+      <input
+        type="file"
+        accept="image/*"
+        @change="onFileChange"
+        ref="fileInput"
+        class="hidden-input"
+      />
+      <span v-if="fileName" class="file-name">{{ fileName }}</span>
+      <img
+        v-if="imageSrc"
+        :src="imageSrc"
+        alt="Preview"
+        class="image-preview"
+      />
+
       <button
         class="login__button"
         ref="loginButton"
@@ -39,7 +57,31 @@ const legend = ref({
   title: "",
   description: "",
   creator: null,
+  image: null,
 });
+
+const selectedFile = ref(null);
+const imageSrc = ref(null);
+const fileName = ref(null);
+const fileInput = ref(null);
+
+const onFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFile.value = file;
+    fileName.value = file.name;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imageSrc.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    legend.value.image = file;
+  }
+};
+
+const triggerFileInput = () => {
+  fileInput.value.click();
+};
 
 const isDisabled = computed(() => {
   return !(legend.value.title !== "" && legend.value.description !== "");
@@ -47,7 +89,14 @@ const isDisabled = computed(() => {
 
 const logLegend = async () => {
   appStore.playSound();
-  await appStore.postLegend(legend.value);
+  const formData = new FormData();
+  formData.append("title", legend.value.title);
+  formData.append("description", legend.value.description);
+  if (legend.value.image) {
+    formData.append("image", legend.value.image);
+  }
+
+  await appStore.postLegend(formData);
 };
 
 const text = ref(null);
@@ -107,6 +156,32 @@ onMounted(() => {
   box-shadow: 0 0 10px rgba(242, 0, 145, 0.8);
 }
 
+.hidden-input {
+  display: none;
+}
+
+.upload-button {
+  background-color: #2596be;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 9px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 10px 0;
+}
+
+.upload-button:hover {
+  background-color: #10aae2;
+}
+
+.file-name {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
 .login__button {
   background-color: #2596be;
   color: white;
@@ -127,5 +202,11 @@ onMounted(() => {
   background-color: #ccc;
   color: #999;
   cursor: not-allowed;
+}
+
+.image-preview {
+  max-width: 100%;
+  height: auto;
+  margin-top: 10px;
 }
 </style>
