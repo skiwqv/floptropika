@@ -54,11 +54,14 @@ onMounted(async () => {
   background: #f7dff5;
   margin-top: 32px;
   padding: 8px 15px;
-  font-size: 0.75rem;
+  font-size: 18px;
   border-radius: 50px;
   font-weight: 600;
 }
 .flop__description {
   overflow-wrap: break-word;
+}
+.developer {
+  font-size: 18px;
 }
 </style>

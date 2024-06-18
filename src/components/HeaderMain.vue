@@ -1,13 +1,11 @@
 <template>
   <div class="header">
-    <img src="../assets/images/rename.png" class="header__logo" />
+    <img
+      src="../assets/images/rename.png"
+      class="header__logo"
+      @click="toHome"
+    />
     <div class="header__wrapper">
-      <router-link
-        to="/"
-        active-class="header__link_active"
-        class="header__link"
-        >Home</router-link
-      >
       <router-link
         to="/about"
         class="header__link"
@@ -29,28 +27,37 @@
       active-class="header__button_active"
       >Login</router-link
     >
-    <button
-      v-if="currentUser"
-      class="header__button"
-      active-class="header__button_active"
-      @click="logOut"
-    >
-      Logout
-    </button>
-    <div v-if="currentUser">{{ currentUser.username }}</div>
+    <div v-if="currentUser" class="user-menu" @click="toggleDropdown">
+      {{ currentUser.username }}
+      <span class="arrow">&#9662;</span>
+      <div v-if="isDropdownVisible" class="dropdown">
+        <button @click="logOut">Logout</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { useAppStore } from "@/store/app.js";
 import router from "@/router";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
+const isDropdownVisible = ref(false);
+
+const toggleDropdown = () => {
+  isDropdownVisible.value = !isDropdownVisible.value;
+};
+
+const toHome = () => {
+  router.push("/");
+};
+
 const logOut = async () => {
   await appStore.logout();
   router.push("/");
+  isDropdownVisible.value = false; // Close the dropdown after logging out
 };
 </script>
 
@@ -68,9 +75,10 @@ const logOut = async () => {
   max-width: 70px;
   max-height: 40px;
   cursor: pointer;
-  transition: box-shadow 0.3s;
+  transition: box-shadow 0.3s, transform 0.3s;
 }
 .header__logo:hover {
+  transform: rotate(360deg);
   box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
 }
 
@@ -121,5 +129,46 @@ const logOut = async () => {
   color: white;
   box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
   border-radius: 9px;
+}
+
+.user-menu {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+}
+
+.arrow {
+  margin-left: 5px;
+}
+
+.dropdown {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  right: 0;
+  top: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.dropdown button {
+  background-color: #2596be;
+  border: none;
+  padding: 10px 20px;
+  font-size: 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  color: black;
+  text-decoration: none;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.dropdown button:hover {
+  background-color: #10aae2;
+  box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
 }
 </style>
