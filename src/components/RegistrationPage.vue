@@ -71,7 +71,6 @@ const isDisabled = computed(() => {
 });
 
 const register = async () => {
-  appStore.playSound();
   const response = await appStore.register(user.value);
   if (response && response.status === 200) {
     isVisible.value = true;

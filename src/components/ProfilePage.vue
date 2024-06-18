@@ -9,7 +9,22 @@
       >
         Edit
       </button>
+      <img :src="currentUser.avatar" alt="Preview" class="image-preview" />
+      <span>{{ fileName }}</span>
+      <button type="button" class="upload-button" @click="triggerFileInput">
+        Choose Image
+      </button>
       <div class="profile__field">
+        <form enctype="multipart/form-data">
+          <input
+            type="file"
+            accept="image/*"
+            @change="onFileChange"
+            ref="fileInput"
+            class="hidden-input"
+          />
+        </form>
+        <span v-if="fileName" class="file-name">{{ fileName }}</span>
         <label class="username">Username:</label>
         <span v-if="!isEditing" class="username">{{
           currentUser.username
@@ -49,6 +64,10 @@ const route = useRoute();
 
 const isEditing = ref(false);
 
+const imageSrc = ref(null);
+const fileName = ref(null);
+const fileInput = ref(null);
+
 const text = ref(null);
 
 const toggleEdit = () => {
@@ -56,8 +75,25 @@ const toggleEdit = () => {
 };
 
 const saveProfile = async () => {
-  // Сохранение профиля пользователя
+  const user = {
+    username: currentUser.value.username,
+    email: currentUser.value.email,
+    avatar: imageSrc.value,
+    bio: null,
+  };
+  await appStore.sendPhoto(user);
+  await appStore.getCurrentUser();
   isEditing.value = false;
+};
+
+const onFileChange = (event) => {
+  const file = event.target.files[0];
+  imageSrc.value = file;
+  fileName.value = file.name;
+};
+
+const triggerFileInput = () => {
+  fileInput.value.click();
 };
 </script>
 
@@ -134,5 +170,41 @@ const saveProfile = async () => {
 }
 .username {
   font-size: 24px;
+}
+.profile__image {
+  max-width: 400px;
+  max-height: 400px;
+}
+
+.upload-button {
+  background-color: #2596be;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 9px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 10px 0;
+}
+
+.upload-button:hover {
+  background-color: #10aae2;
+}
+
+.file-name {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+.image-preview {
+  vertical-align: middle;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+}
+.hidden-input {
+  display: none;
 }
 </style>

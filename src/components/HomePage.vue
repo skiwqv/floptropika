@@ -10,12 +10,30 @@
 <script setup>
 import { useAppStore } from "@/store/app";
 import { computed, onMounted } from "vue";
+import gsap from "gsap";
 const appStore = useAppStore();
 
 const legends = computed(() => appStore.getAllLegends);
 
+const animateLines = () => {
+  const linesElements = gsap.utils.toArray(".card-item");
+  const tl = gsap.timeline({ delay: 0.5 });
+
+  linesElements.forEach((element, index) => {
+    const animation = gsap.timeline();
+
+    animation.from(
+      element,
+      { opacity: 0, scale: 0, duration: 0.5 },
+      index * 0.1
+    );
+
+    tl.add(animation, 0); // Добавляем анимацию в основную таймлайн без задержки
+  });
+};
 onMounted(async () => {
   await appStore.getLegends();
+  animateLines();
 });
 </script>
 

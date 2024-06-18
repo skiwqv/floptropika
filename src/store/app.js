@@ -26,6 +26,8 @@ export const useAppStore = defineStore("app", {
     async signIn(user) {
       this.isLoading = true;
       try {
+        const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
+        audio.play();
         const response = await apiClient.post("/api/login/", user);
         if (response.status === 200) {
           const getToken = await apiClient.post("/api/token/", user);
@@ -44,6 +46,8 @@ export const useAppStore = defineStore("app", {
         }
         return response;
       } catch (error) {
+        const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+        audio.play();
         console.error("Login failed", error);
       } finally {
         this.isLoading = false;
@@ -52,9 +56,13 @@ export const useAppStore = defineStore("app", {
     async register(user) {
       this.isLoading = true;
       try {
+        const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
+        audio.play();
         const response = await apiClient.post("/api/register/", user);
         return response;
       } catch (error) {
+        const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+        audio.play();
         console.error("registration failed", error);
       } finally {
         this.isLoading = false;
@@ -82,6 +90,8 @@ export const useAppStore = defineStore("app", {
           ?.split("=")[1] || "";
       this.isLoading = true;
       try {
+        const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
+        audio.play();
         await apiClient.post("/api/logout/", { refresh: refreshToken });
         this.currentUser = "";
         this.accessToken = "";
@@ -90,6 +100,8 @@ export const useAppStore = defineStore("app", {
         delete_cookie("refresh");
         return true;
       } catch (error) {
+        const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+        audio.play();
         throw error.response.data;
       } finally {
         this.isLoading = false;
@@ -98,7 +110,12 @@ export const useAppStore = defineStore("app", {
     async postLegend(legend) {
       this.isLoading = true;
       try {
+        const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
+        audio.play();
         await apiClient.post("/flop/create/", legend);
+      } catch (error) {
+        const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+        audio.play();
       } finally {
         this.isLoading = false;
       }
@@ -113,9 +130,23 @@ export const useAppStore = defineStore("app", {
         this.isLoading = false;
       }
     },
-    playSound() {
-      const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
-      audio.play();
+    async sendPhoto(user) {
+      this.isLoading = true;
+      try {
+        const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
+        audio.play();
+        await apiClient.patch("/api/update/", user, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } catch (error) {
+        const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+        audio.play();
+        console.error("Error:", error);
+      } finally {
+        this.isLoading = false;
+      }
     },
   },
 });

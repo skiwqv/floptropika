@@ -60,7 +60,6 @@ const toProfile = () => {
 };
 
 const logOut = async () => {
-  appStore.playSound();
   await appStore.logout();
   router.push("/");
   isDropdownVisible.value = false; // Close the dropdown after logging out

@@ -57,7 +57,6 @@ const legend = ref({
   title: "",
   description: "",
   creator: null,
-  image: null,
 });
 
 const selectedFile = ref(null);
@@ -88,15 +87,7 @@ const isDisabled = computed(() => {
 });
 
 const logLegend = async () => {
-  appStore.playSound();
-  const formData = new FormData();
-  formData.append("title", legend.value.title);
-  formData.append("description", legend.value.description);
-  if (legend.value.image) {
-    formData.append("image", legend.value.image);
-  }
-
-  await appStore.postLegend(formData);
+  await appStore.postLegend(legend.value);
 };
 
 const text = ref(null);
