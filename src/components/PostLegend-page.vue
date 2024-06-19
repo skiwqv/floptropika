@@ -50,6 +50,7 @@
 import { ref, computed, onMounted } from "vue";
 import gsap from "gsap";
 import { useAppStore } from "@/store/app.js";
+import router from "@/router";
 
 const appStore = useAppStore();
 
@@ -88,6 +89,7 @@ const isDisabled = computed(() => {
 
 const logLegend = async () => {
   await appStore.postLegend(legend.value);
+  router.push("/");
 };
 
 const text = ref(null);

@@ -28,11 +28,12 @@
       >Login</router-link
     >
     <div v-if="currentUser" class="user-menu" @click="toggleDropdown">
+      <img :src="currentUser.avatar" alt="User Avatar" class="user-avatar" />
       {{ currentUser.username }}
       <span class="arrow">&#9662;</span>
       <div v-if="isDropdownVisible" class="dropdown">
         <button @click="toProfile">Profile</button>
-        <button @click="logOut">My Legends</button>
+        <button @click="toLegends">My Legends</button>
         <button @click="logOut">Logout</button>
       </div>
     </div>
@@ -55,8 +56,13 @@ const toggleDropdown = () => {
 const toHome = () => {
   router.push("/");
 };
+
 const toProfile = () => {
   router.push(`/profile/${currentUser.value.id}`);
+};
+
+const toLegends = () => {
+  router.push("/my-legends");
 };
 
 const logOut = async () => {
@@ -144,6 +150,14 @@ const logOut = async () => {
   font-size: 18px;
 }
 
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
 .arrow {
   margin-left: 5px;
 }
@@ -154,8 +168,8 @@ const logOut = async () => {
   flex-direction: column;
   background-color: white;
   border: 1px solid #ccc;
-  right: 0;
-  top: 20px;
+  right: -16px;
+  top: 50px;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   padding: 10px;

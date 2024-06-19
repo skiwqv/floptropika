@@ -1,32 +1,48 @@
 <template>
   <div class="profile__wrapper" v-if="currentUser">
     <div class="profile">
-      <h3 ref="text">Profile</h3>
-      <button
-        @click="toggleEdit"
-        class="profile__button--edit"
-        v-if="currentUser.id == route.params.userId"
-      >
-        Edit
-      </button>
-      <img :src="currentUser.avatar" alt="Preview" class="image-preview" />
-      <span>{{ fileName }}</span>
-      <button type="button" class="upload-button" @click="triggerFileInput">
-        Choose Image
-      </button>
-      <div class="profile__field">
-        <form enctype="multipart/form-data">
-          <input
-            type="file"
-            accept="image/*"
-            @change="onFileChange"
-            ref="fileInput"
-            class="hidden-input"
-          />
-        </form>
+      <div class="profile__header">
+        <h3 ref="text">Profile</h3>
+        <button
+          @click="toggleEdit"
+          class="profile__button--edit"
+          v-if="currentUser.id == route.params.userId"
+        >
+          Edit
+        </button>
+      </div>
+      <div class="profile__image-container">
+        <img
+          :src="currentUser.avatar"
+          alt="Profile Picture"
+          class="image-preview"
+        />
+        <img
+          v-if="imageSrc"
+          :src="imagePreview"
+          alt="New Profile Picture"
+          class="image-preview-new"
+        />
+        <button
+          v-if="isEditing"
+          type="button"
+          class="upload-button"
+          @click="triggerFileInput"
+        >
+          Choose Image
+        </button>
+        <input
+          type="file"
+          accept="image/*"
+          @change="onFileChange"
+          ref="fileInput"
+          class="hidden-input"
+        />
         <span v-if="fileName" class="file-name">{{ fileName }}</span>
-        <label class="username">Username:</label>
-        <span v-if="!isEditing" class="username">{{
+      </div>
+      <div class="profile__field">
+        <label class="profile__label">Username</label>
+        <span v-if="!isEditing" class="profile__value">{{
           currentUser.username
         }}</span>
         <input
@@ -37,14 +53,27 @@
         />
       </div>
       <div class="profile__field">
-        <label class="username">Email:</label>
-        <span v-if="!isEditing" class="username">{{ currentUser.email }}</span>
+        <label class="profile__label">Email</label>
+        <span v-if="!isEditing" class="profile__value">{{
+          currentUser.email
+        }}</span>
         <input
           v-else
           v-model="currentUser.email"
           type="email"
           class="profile__input"
         />
+      </div>
+      <div class="profile__field">
+        <label class="profile__label">Bio</label>
+        <span v-if="!isEditing" class="profile__value">{{
+          currentUser.bio
+        }}</span>
+        <textarea
+          v-else
+          v-model="currentUser.bio"
+          class="profile__textarea"
+        ></textarea>
       </div>
       <button v-if="isEditing" @click="saveProfile" class="profile__button">
         Save Changes
@@ -67,6 +96,7 @@ const isEditing = ref(false);
 const imageSrc = ref(null);
 const fileName = ref(null);
 const fileInput = ref(null);
+const imagePreview = ref(null);
 
 const text = ref(null);
 
@@ -79,10 +109,13 @@ const saveProfile = async () => {
     username: currentUser.value.username,
     email: currentUser.value.email,
     avatar: imageSrc.value,
-    bio: null,
+    bio: currentUser.value.bio,
   };
   await appStore.sendPhoto(user);
   await appStore.getCurrentUser();
+  imageSrc.value = null;
+  fileName.value = null;
+  imagePreview.value = null;
   isEditing.value = false;
 };
 
@@ -90,6 +123,7 @@ const onFileChange = (event) => {
   const file = event.target.files[0];
   imageSrc.value = file;
   fileName.value = file.name;
+  imagePreview.value = URL.createObjectURL(file);
 };
 
 const triggerFileInput = () => {
@@ -102,41 +136,73 @@ const triggerFileInput = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 .profile {
-  background-color: #ffffffa8;
-  width: 400px;
-  height: auto;
-  max-width: 90%;
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 500px;
   padding: 30px;
   border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.profile__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.profile__image-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 70px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 .profile__field {
   margin: 10px 0;
   width: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+}
+
+.profile__label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.profile__value {
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
 .profile__input {
-  width: 60%;
+  width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
-  font-size: 24px;
+  font-size: 16px;
   outline: none;
   transition: box-shadow 0.3s ease;
 }
 
-.profile__input:focus {
+.profile__textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  outline: none;
+  transition: box-shadow 0.3s ease;
+  resize: vertical;
+}
+
+.profile__input:focus,
+.profile__textarea:focus {
   box-shadow: 0 0 10px rgba(242, 0, 145, 0.8);
 }
 
@@ -144,12 +210,13 @@ const triggerFileInput = () => {
   background-color: #2596be;
   color: white;
   border: none;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 5px;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  margin-bottom: 20px;
+  width: 100%;
+  margin-top: 20px;
 }
 
 .profile__button--edit {
@@ -161,31 +228,22 @@ const triggerFileInput = () => {
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  align-self: flex-end;
-  margin-bottom: 20px;
 }
 
 .profile__button--edit:hover {
   background-color: #10aae2;
-}
-.username {
-  font-size: 24px;
-}
-.profile__image {
-  max-width: 400px;
-  max-height: 400px;
 }
 
 .upload-button {
   background-color: #2596be;
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 9px;
-  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  margin: 10px 0;
+  margin-top: 10px;
 }
 
 .upload-button:hover {
@@ -198,12 +256,19 @@ const triggerFileInput = () => {
   color: #666;
 }
 
-.image-preview {
-  vertical-align: middle;
+.image-preview,
+.image-preview-new {
   width: 150px;
   height: 150px;
   border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
 }
+
+.image-preview-new {
+  border: 2px dashed #2596be;
+}
+
 .hidden-input {
   display: none;
 }
