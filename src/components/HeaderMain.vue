@@ -28,7 +28,16 @@
       >Login</router-link
     >
     <div v-if="currentUser" class="user-menu" @click="toggleDropdown">
-      <img :src="currentUser.avatar" alt="User Avatar" class="user-avatar" />
+      <img
+        :src="
+          currentUser.avatar
+            ? currentUser.avatar
+            : require('../assets/images/placeholder.png')
+        "
+        alt="User Avatar"
+        class="user-avatar"
+      />
+
       {{ currentUser.username }}
       <span class="arrow">&#9662;</span>
       <div v-if="isDropdownVisible" class="dropdown">
@@ -62,7 +71,7 @@ const toProfile = () => {
 };
 
 const toLegends = () => {
-  router.push("/my-legends");
+  router.push("/myLegends");
 };
 
 const logOut = async () => {
@@ -175,6 +184,7 @@ const logOut = async () => {
   padding: 10px;
   margin-top: 10px;
   max-width: 200px;
+  z-index: 999;
 }
 
 .dropdown button {

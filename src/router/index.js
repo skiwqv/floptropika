@@ -31,6 +31,11 @@ const routes = [
     name: "profle",
     component: () => import("../views/Profile-view.vue"),
   },
+  {
+    path: "/myLegends",
+    name: "myLegends",
+    component: () => import("../views/MyLegends-view.vue"),
+  },
 ];
 
 const router = createRouter({

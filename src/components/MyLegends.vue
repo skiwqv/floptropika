@@ -1,6 +1,6 @@
 <template>
   <div class="card-list" v-if="legends">
-    <div class="card-items" v-for="legend in legends" :key="legend.id">
+    <div class="card-items" v-for="legend in filteredLegends" :key="legend.id">
       <div class="nft">
         <div class="main">
           <img class="tokenImage" :src="currentUser.avatar" alt="NFT" />
@@ -28,9 +28,20 @@ import gsap from "gsap";
 const appStore = useAppStore();
 
 const legends = computed(() => appStore.getAllLegends);
+
 const currentUser = computed(() => appStore.getUser);
+
+const filteredLegends = computed(() => {
+  if (legends.value != null) {
+    return legends.value.filter(
+      (legend) => legend.creator === currentUser.value.id
+    );
+  }
+  return 0;
+});
+
 const animateLines = () => {
-  const linesElements = gsap.utils.toArray(".card-items");
+  const linesElements = gsap.utils.toArray(".card-item");
   const tl = gsap.timeline({ delay: 0.5 });
 
   linesElements.forEach((element, index) => {
@@ -42,9 +53,10 @@ const animateLines = () => {
       index * 0.1
     );
 
-    tl.add(animation, 0);
+    tl.add(animation, 0); // Adding animation to the main timeline without delay
   });
 };
+
 onMounted(async () => {
   await appStore.getLegends();
   animateLines();
@@ -52,6 +64,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  max-width: 1250px;
+  margin: 150px auto;
+  padding: 20px;
+  gap: 20px;
+  overflow-wrap: break-word;
+}
 .card-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

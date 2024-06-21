@@ -13,7 +13,11 @@
       </div>
       <div class="profile__image-container">
         <img
-          :src="currentUser.avatar"
+          :src="
+            currentUser.avatar
+              ? currentUser.avatar
+              : require('../assets/images/placeholder.png')
+          "
           alt="Profile Picture"
           class="image-preview"
         />
