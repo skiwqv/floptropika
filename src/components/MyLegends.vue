@@ -13,7 +13,7 @@
             <div class="wrapper">
               <img :src="currentUser.avatar" alt="Creator" />
             </div>
-            <p><ins>Creation of</ins> {{ currentUser.username }}</p>
+            <p><ins>Author</ins> {{ currentUser.username }}</p>
           </div>
         </div>
       </div>
