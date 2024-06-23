@@ -61,10 +61,8 @@ const animateLines = () => {
   });
 };
 onMounted(async () => {
-  if (legends.value) {
-    await appStore.getLegends();
-    animateLines();
-  }
+  await appStore.getLegends();
+  animateLines();
 });
 </script>
 
