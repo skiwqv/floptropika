@@ -3,7 +3,12 @@
     <div class="card-items" v-for="legend in filteredLegends" :key="legend.id">
       <div class="nft">
         <div class="main">
-          <!-- <img class="tokenImage" :src="currentUser.avatar" alt="NFT" /> -->
+          <img
+            class="tokenImage"
+            v-if="legend.cover"
+            :src="legend.cover"
+            alt="NFT"
+          />
           <h2>{{ legend.title }}</h2>
           <p class="description">
             {{ legend.description }}
