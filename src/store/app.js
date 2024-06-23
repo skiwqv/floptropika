@@ -17,10 +17,12 @@ export const useAppStore = defineStore("app", {
         ?.split("=")[1] || "",
     legends: null,
     isLoading: false,
+    userById: null,
   }),
   getters: {
     getUser: (state) => state.currentUser,
     getAllLegends: (state) => state.legends,
+    profileUser: (state) => state.userById,
   },
   actions: {
     async signIn(user) {
@@ -112,7 +114,11 @@ export const useAppStore = defineStore("app", {
       try {
         const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
         audio.play();
-        await apiClient.post("/flop/create/", legend);
+        await apiClient.post("/flop/create/", legend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
       } catch (error) {
         const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
         audio.play();
@@ -144,6 +150,16 @@ export const useAppStore = defineStore("app", {
         const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
         audio.play();
         console.error("Error:", error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getUserById(id) {
+      this.isLoading = true;
+      try {
+        const flopusa = await apiClient.get(`/api/profile/${id}`);
+        this.userById = flopusa.data;
+        return flopusa;
       } finally {
         this.isLoading = false;
       }

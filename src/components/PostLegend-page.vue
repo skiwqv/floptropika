@@ -28,8 +28,8 @@
       />
       <span v-if="fileName" class="file-name">{{ fileName }}</span>
       <img
-        v-if="imageSrc"
-        :src="imageSrc"
+        v-if="imagePreview"
+        :src="imagePreview"
         alt="Preview"
         class="image-preview"
       />
@@ -37,7 +37,7 @@
       <button
         class="login__button"
         ref="loginButton"
-        @click="logLegend"
+        @click="postLegend"
         :disabled="isDisabled"
       >
         Post
@@ -54,41 +54,42 @@ import router from "@/router";
 
 const appStore = useAppStore();
 
-const legend = ref({
-  title: "",
-  description: "",
-  creator: null,
-});
-
-const selectedFile = ref(null);
+const imagePreview = ref(null);
 const imageSrc = ref(null);
 const fileName = ref(null);
 const fileInput = ref(null);
 
 const onFileChange = (event) => {
   const file = event.target.files[0];
-  if (file) {
-    selectedFile.value = file;
-    fileName.value = file.name;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imageSrc.value = e.target.result;
-    };
-    reader.readAsDataURL(file);
-    legend.value.image = file;
-  }
+  imageSrc.value = file;
+  fileName.value = file.name;
+  imagePreview.value = URL.createObjectURL(file);
 };
+
+const legend = ref({
+  title: "",
+  description: "",
+  cover: imageSrc.value,
+});
 
 const triggerFileInput = () => {
   fileInput.value.click();
 };
 
 const isDisabled = computed(() => {
-  return !(legend.value.title !== "" && legend.value.description !== "");
+  return !(
+    legend.value.title !== "" &&
+    legend.value.description !== "" &&
+    imageSrc.value !== null
+  );
 });
 
-const logLegend = async () => {
-  await appStore.postLegend(legend.value);
+const postLegend = async () => {
+  const formData = new FormData();
+  formData.append("title", legend.value.title);
+  formData.append("description", legend.value.description);
+  formData.append("cover", imageSrc.value);
+  await appStore.postLegend(formData);
   router.push("/");
 };
 
@@ -198,8 +199,12 @@ onMounted(() => {
 }
 
 .image-preview {
-  max-width: 100%;
-  height: auto;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 10px;
+  object-fit: cover;
   margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
 </style>

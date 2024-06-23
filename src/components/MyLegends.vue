@@ -3,7 +3,7 @@
     <div class="card-items" v-for="legend in filteredLegends" :key="legend.id">
       <div class="nft">
         <div class="main">
-          <img class="tokenImage" :src="currentUser.avatar" alt="NFT" />
+          <!-- <img class="tokenImage" :src="currentUser.avatar" alt="NFT" /> -->
           <h2>{{ legend.title }}</h2>
           <p class="description">
             {{ legend.description }}
@@ -11,9 +11,16 @@
           <hr />
           <div class="creator">
             <div class="wrapper">
-              <img :src="currentUser.avatar" alt="Creator" />
+              <img
+                :src="
+                  legend.creator_avatar
+                    ? legend.creator_avatar
+                    : require('../assets/images/placeholder.png')
+                "
+                alt="Creator"
+              />
             </div>
-            <p><ins>Author</ins> {{ currentUser.username }}</p>
+            <p><ins>Author</ins> {{ legend.creator_username }}</p>
           </div>
         </div>
       </div>
@@ -93,9 +100,10 @@ onMounted(async () => {
   background-color: #282c34;
   background: linear-gradient(
     0deg,
-    rgba(40, 44, 52, 1) 0%,
+    rgb(218 0 127) 0%,
     rgba(17, 0, 32, 0.5) 100%
   );
+
   box-shadow: 0 7px 20px 5px rgba(0, 0, 0, 0.533);
   border-radius: 0.7rem;
   backdrop-filter: blur(7px);

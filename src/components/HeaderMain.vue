@@ -66,8 +66,9 @@ const toHome = () => {
   router.push("/");
 };
 
-const toProfile = () => {
+const toProfile = async () => {
   router.push(`/profile/${currentUser.value.id}`);
+  await appStore.getUserById(currentUser.value.id);
 };
 
 const toLegends = () => {

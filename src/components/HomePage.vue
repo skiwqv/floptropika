@@ -3,7 +3,12 @@
     <div class="card-items" v-for="legend in legends" :key="legend.id">
       <div class="nft">
         <div class="main">
-          <img class="tokenImage" :src="currentUser.avatar" alt="NFT" />
+          <img
+            class="tokenImage"
+            v-if="legend.cover"
+            :src="legend.cover"
+            alt="NFT"
+          />
           <h2>{{ legend.title }}</h2>
           <p class="description">
             {{ legend.description }}
@@ -11,9 +16,16 @@
           <hr />
           <div class="creator" @click="toUser(legend)">
             <div class="wrapper">
-              <img :src="currentUser.avatar" alt="Creator" />
+              <img
+                :src="
+                  legend.creator_avatar
+                    ? legend.creator_avatar
+                    : require('../assets/images/placeholder.png')
+                "
+                alt="Creator"
+              />
             </div>
-            <p><ins>Author</ins> {{ currentUser.username }}</p>
+            <p><ins>Author</ins> {{ legend.creator_username }}</p>
           </div>
         </div>
       </div>
@@ -28,7 +40,6 @@ import gsap from "gsap";
 import router from "@/router";
 const appStore = useAppStore();
 const legends = computed(() => appStore.getAllLegends);
-const currentUser = computed(() => appStore.getUser);
 
 const toUser = (legend) => {
   router.push(`/profile/${legend.creator}`);
@@ -50,8 +61,10 @@ const animateLines = () => {
   });
 };
 onMounted(async () => {
-  await appStore.getLegends();
-  animateLines();
+  if (legends.value) {
+    await appStore.getLegends();
+    animateLines();
+  }
 });
 </script>
 
@@ -74,7 +87,7 @@ onMounted(async () => {
   background-color: #282c34;
   background: linear-gradient(
     0deg,
-    rgba(40, 44, 52, 1) 0%,
+    rgb(218 0 127) 0%,
     rgba(17, 0, 32, 0.5) 100%
   );
   box-shadow: 0 7px 20px 5px rgba(0, 0, 0, 0.533);

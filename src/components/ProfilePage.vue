@@ -1,12 +1,12 @@
 <template>
-  <div class="profile__wrapper" v-if="currentUser">
+  <div class="profile__wrapper" v-if="profileUser">
     <div class="profile">
       <div class="profile__header">
-        <h3 ref="text">{{ currentUser.username }}`s Profile</h3>
+        <h3 ref="text">{{ profileUser.username }}`s Profile</h3>
         <button
           @click="toggleEdit"
           class="profile__button--edit"
-          v-if="currentUser.id == route.params.userId"
+          v-if="currentUser.id == profileUser.id"
         >
           Edit
         </button>
@@ -14,8 +14,8 @@
       <div class="profile__image-container">
         <img
           :src="
-            currentUser.avatar
-              ? currentUser.avatar
+            profileUser.avatar
+              ? profileUser.avatar
               : require('../assets/images/placeholder.png')
           "
           alt="Profile Picture"
@@ -47,11 +47,11 @@
       <div class="profile__field">
         <label class="profile__label">Username</label>
         <span v-if="!isEditing" class="profile__value">{{
-          currentUser.username
+          profileUser.username
         }}</span>
         <input
           v-else
-          v-model="currentUser.username"
+          v-model="profileUser.username"
           type="text"
           class="profile__input"
         />
@@ -59,11 +59,11 @@
       <div class="profile__field">
         <label class="profile__label">Email</label>
         <span v-if="!isEditing" class="profile__value">{{
-          currentUser.email
+          profileUser.email
         }}</span>
         <input
           v-else
-          v-model="currentUser.email"
+          v-model="profileUser.email"
           type="email"
           class="profile__input"
         />
@@ -71,11 +71,11 @@
       <div class="profile__field">
         <label class="profile__label">Bio</label>
         <span v-if="!isEditing" class="profile__value">{{
-          currentUser.bio
+          profileUser.bio
         }}</span>
         <textarea
           v-else
-          v-model="currentUser.bio"
+          v-model="profileUser.bio"
           class="profile__textarea"
         ></textarea>
       </div>
@@ -87,12 +87,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useAppStore } from "@/store/app.js";
 import { useRoute } from "vue-router";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
+const profileUser = computed(() => appStore.profileUser);
 const route = useRoute();
 
 const isEditing = ref(false);
@@ -110,13 +111,14 @@ const toggleEdit = () => {
 
 const saveProfile = async () => {
   const user = {
-    username: currentUser.value.username,
-    email: currentUser.value.email,
+    username: profileUser.value.username,
+    email: profileUser.value.email,
     avatar: imageSrc.value,
-    bio: currentUser.value.bio,
+    bio: profileUser.value.bio,
   };
   await appStore.sendPhoto(user);
   await appStore.getCurrentUser();
+  await appStore.getUserById(currentUser.value.id);
   imageSrc.value = null;
   fileName.value = null;
   imagePreview.value = null;
@@ -133,6 +135,9 @@ const onFileChange = (event) => {
 const triggerFileInput = () => {
   fileInput.value.click();
 };
+onMounted(async () => {
+  await appStore.getUserById(route.params.userId);
+});
 </script>
 
 <style scoped>
