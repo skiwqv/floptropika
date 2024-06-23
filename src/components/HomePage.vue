@@ -9,11 +9,11 @@
             {{ legend.description }}
           </p>
           <hr />
-          <div class="creator">
+          <div class="creator" @click="toUser(legend)">
             <div class="wrapper">
               <img :src="currentUser.avatar" alt="Creator" />
             </div>
-            <p><ins>Creation of</ins> {{ currentUser.username }}</p>
+            <p><ins>Author</ins> {{ currentUser.username }}</p>
           </div>
         </div>
       </div>
@@ -25,10 +25,14 @@
 import { useAppStore } from "@/store/app";
 import { computed, onMounted } from "vue";
 import gsap from "gsap";
+import router from "@/router";
 const appStore = useAppStore();
-
 const legends = computed(() => appStore.getAllLegends);
 const currentUser = computed(() => appStore.getUser);
+
+const toUser = (legend) => {
+  router.push(`/profile/${legend.creator}`);
+};
 const animateLines = () => {
   const linesElements = gsap.utils.toArray(".card-items");
   const tl = gsap.timeline({ delay: 0.5 });
@@ -146,6 +150,7 @@ onMounted(async () => {
   align-items: center;
   margin-top: 0.2rem;
   margin-bottom: -0.3rem;
+  cursor: pointer;
 }
 
 .nft .main .creator ins {

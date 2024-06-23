@@ -2,7 +2,7 @@
   <div class="profile__wrapper" v-if="currentUser">
     <div class="profile">
       <div class="profile__header">
-        <h3 ref="text">Profile</h3>
+        <h3 ref="text">{{ currentUser.username }}`s Profile</h3>
         <button
           @click="toggleEdit"
           class="profile__button--edit"

@@ -58,7 +58,9 @@ const animateLines = () => {
 };
 
 onMounted(async () => {
-  await appStore.getLegends();
+  await appStore.getLegends().then((resp) => {
+    console.log(resp.data);
+  });
   animateLines();
 });
 </script>
