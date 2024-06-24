@@ -164,5 +164,40 @@ export const useAppStore = defineStore("app", {
         this.isLoading = false;
       }
     },
+    async deleteLegend(legend) {
+      this.isLoading = true;
+      try {
+        const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
+        audio.play();
+        await apiClient.delete(`/flop/delete/${legend}/`, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } catch (error) {
+        const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+        audio.play();
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async updateLegend(legend) {
+      this.isLoading = true;
+      try {
+        console.log("store legend", legend);
+        const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
+        audio.play();
+        await apiClient.patch(`/flop/update/${legend.id}/`, legend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } catch (error) {
+        const audio = new Audio(require("@/assets/sounds/jiafei-scream.mp3"));
+        audio.play();
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });
