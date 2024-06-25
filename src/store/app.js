@@ -18,11 +18,14 @@ export const useAppStore = defineStore("app", {
     legends: null,
     isLoading: false,
     userById: null,
+    websocket: null,
+    messages: [], // добавить массив для хранения сообщений чата
   }),
   getters: {
     getUser: (state) => state.currentUser,
     getAllLegends: (state) => state.legends,
     profileUser: (state) => state.userById,
+    chatMessages: (state) => state.messages, // добавить геттер для сообщений чата
   },
   actions: {
     async signIn(user) {
@@ -197,6 +200,45 @@ export const useAppStore = defineStore("app", {
         audio.play();
       } finally {
         this.isLoading = false;
+      }
+    },
+    // WebSocket actions
+    initWebSocket(roomName) {
+      this.websocket = new WebSocket(
+        `wss://flopproject-1.onrender.com/ws/chat/${roomName}/`
+      );
+      this.websocket.onopen = () => {
+        console.log("WebSocket connection opened");
+      };
+
+      this.websocket.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        this.messages.push(message);
+      };
+
+      this.websocket.onclose = () => {
+        console.log("WebSocket connection closed");
+        this.websocket = null;
+      };
+
+      this.websocket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+    },
+
+    sendMessage(message) {
+      if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+        this.websocket.send(
+          JSON.stringify({
+            message: message,
+          })
+        );
+        this.messages.push(message);
+      }
+    },
+    closeWebSocket() {
+      if (this.websocket) {
+        this.websocket.close();
       }
     },
   },

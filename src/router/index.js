@@ -36,6 +36,11 @@ const routes = [
     name: "myLegends",
     component: () => import("../views/MyLegends-view.vue"),
   },
+  {
+    path: "/room/:roomName",
+    name: "room",
+    component: () => import("../views/Chat-view.vue"),
+  },
 ];
 
 const router = createRouter({

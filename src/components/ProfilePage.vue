@@ -79,6 +79,13 @@
           class="profile__textarea"
         ></textarea>
       </div>
+      <button
+        v-if="currentUser.id != profileUser.id"
+        @click="toChat"
+        class="profile__button"
+      >
+        Send Message
+      </button>
       <button v-if="isEditing" @click="saveProfile" class="profile__button">
         Save Changes
       </button>
@@ -90,12 +97,12 @@
 import { ref, computed, onMounted } from "vue";
 import { useAppStore } from "@/store/app.js";
 import { useRoute } from "vue-router";
+import router from "@/router";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
 const profileUser = computed(() => appStore.profileUser);
 const route = useRoute();
-
 const isEditing = ref(false);
 
 const imageSrc = ref(null);
@@ -107,6 +114,12 @@ const text = ref(null);
 
 const toggleEdit = () => {
   isEditing.value = !isEditing.value;
+};
+
+const toChat = () => {
+  router.push(
+    `/room/${currentUser.value.username}${profileUser.value.username}`
+  );
 };
 
 const saveProfile = async () => {

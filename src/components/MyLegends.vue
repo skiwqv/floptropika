@@ -89,7 +89,7 @@ const legends = computed(() => appStore.getAllLegends);
 const currentUser = computed(() => appStore.getUser);
 
 const filteredLegends = computed(() => {
-  if (legends.value != null) {
+  if (legends.value != null && currentUser.value) {
     return legends.value.filter(
       (legend) => legend.creator === currentUser.value.id
     );
