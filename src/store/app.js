@@ -204,35 +204,40 @@ export const useAppStore = defineStore("app", {
       }
     },
     // WebSocket actions
-    initWebSocket(roomName, currentUser, elseUser) {
+    initWebSocket(roomName) {
       this.websocket = new WebSocket(
         `wss://flopproject-1.onrender.com/ws/chat/${roomName}/`
       );
       this.websocket.onopen = () => {
         console.log("WebSocket connection opened");
-        this.websocket.send(
-          JSON.stringify({
-            sender: currentUser,
-            recipient: elseUser,
-          })
-        );
+        // this.websocket.send(
+        //   JSON.stringify({
+        //     sender: currentUser,
+        //     recipient: elseUser,
+        //   })
+        // );
       };
 
       this.websocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
         console.log("event", event);
+        const data = JSON.parse(event.data);
         console.log("data", data);
         if (data.message) {
           this.messages.push({
-            content: data.message.content,
-            user: data.message.sender,
-            recipient: data.message.recipient,
+            message: data.message,
+            sender: data.sender,
+            recipient: data.recipient,
+            avatar: data.avatar,
           });
         }
       };
 
-      this.websocket.onclose = () => {
-        console.log("WebSocket connection closed");
+      this.websocket.onclose = (event) => {
+        console.log(
+          "WebSocket connection closed with error:",
+          event.code,
+          event.reason
+        );
         this.websocket = null;
       };
 
@@ -246,8 +251,8 @@ export const useAppStore = defineStore("app", {
         this.websocket.send(
           JSON.stringify({
             message: message.content,
-            sender: message.sender,
-            recipient: message.recipient,
+            sender: message.sender.username,
+            recipient: message.recipient.username,
           })
         );
       }

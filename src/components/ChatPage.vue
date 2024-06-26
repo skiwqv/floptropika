@@ -10,24 +10,24 @@
           :key="message.content"
           :class="{
             message: true,
-            'message--own': message.user.id == currentUser.id,
-            'message--other': message.user.id != currentUser.id,
+            'message--own': message.sender == currentUser.username,
+            'message--other': message.sender != currentUser.username,
           }"
         >
           <div class="message__header">
             <img
               :src="
-                message.user.avatar
-                  ? message.user.avatar
+                message.avatar
+                  ? message.avatar
                   : require('../assets/images/placeholder.png')
               "
               alt="User Avatar"
               class="message__avatar"
             />
-            <span class="message__username">{{ message.user.username }}</span>
+            <span class="message__username">{{ message.sender }}</span>
           </div>
           <div class="message__body">
-            <p>{{ message.content }}</p>
+            <p>{{ message.message }}</p>
           </div>
         </div>
       </div>
