@@ -161,6 +161,7 @@ export const useAppStore = defineStore("app", {
       this.isLoading = true;
       try {
         const flopusa = await apiClient.get(`/api/profile/${id}`);
+        sessionStorage.setItem("recipientId", id);
         this.userById = flopusa.data;
         return flopusa;
       } finally {
@@ -203,17 +204,31 @@ export const useAppStore = defineStore("app", {
       }
     },
     // WebSocket actions
-    initWebSocket(roomName) {
+    initWebSocket(roomName, currentUser, elseUser) {
       this.websocket = new WebSocket(
         `wss://flopproject-1.onrender.com/ws/chat/${roomName}/`
       );
       this.websocket.onopen = () => {
         console.log("WebSocket connection opened");
+        this.websocket.send(
+          JSON.stringify({
+            sender: currentUser,
+            recipient: elseUser,
+          })
+        );
       };
 
       this.websocket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        this.messages.push(message);
+        const data = JSON.parse(event.data);
+        console.log("event", event);
+        console.log("data", data);
+        if (data.message) {
+          this.messages.push({
+            content: data.message.content,
+            user: data.message.sender,
+            recipient: data.message.recipient,
+          });
+        }
       };
 
       this.websocket.onclose = () => {
@@ -230,10 +245,11 @@ export const useAppStore = defineStore("app", {
       if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
         this.websocket.send(
           JSON.stringify({
-            message: message,
+            message: message.content,
+            sender: message.sender,
+            recipient: message.recipient,
           })
         );
-        this.messages.push(message);
       }
     },
     closeWebSocket() {

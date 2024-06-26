@@ -3,21 +3,18 @@
     <div class="chat-room">
       <div class="chat-room__header">
         <h3>FlopoGram</h3>
-        <button @click="leaveChat" class="chat-room__button--leave">
-          Leave Chat
-        </button>
       </div>
       <div class="chat-room__messages" ref="messagesContainer">
         <div
           v-for="message in messages"
-          :key="message.id"
+          :key="message.content"
           :class="{
             message: true,
-            'message--own': message.userId === currentUser.id,
-            'message--other': message.userId !== currentUser.id,
+            'message--own': message.user.id == currentUser.id,
+            'message--other': message.user.id != currentUser.id,
           }"
         >
-          <!-- <div class="message__header">
+          <div class="message__header">
             <img
               :src="
                 message.user.avatar
@@ -28,9 +25,9 @@
               class="message__avatar"
             />
             <span class="message__username">{{ message.user.username }}</span>
-          </div> -->
+          </div>
           <div class="message__body">
-            <p>{{ message }}</p>
+            <p>{{ message.content }}</p>
           </div>
         </div>
       </div>
@@ -56,6 +53,7 @@ import { useAppStore } from "@/store/app.js";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
+const profileUser = computed(() => appStore.profileUser);
 const messages = computed(() => appStore.chatMessages);
 const newMessage = ref("");
 const messagesContainer = ref(null);
@@ -64,7 +62,11 @@ const route = useRoute();
 
 const sendMessage = async () => {
   if (newMessage.value.trim() === "") return;
-  const message = newMessage.value;
+  const message = {
+    sender: currentUser.value,
+    content: newMessage.value,
+    recipient: profileUser.value,
+  };
   appStore.sendMessage(message);
   newMessage.value = "";
   await nextTick();
@@ -78,12 +80,14 @@ const scrollToBottom = () => {
   }
 };
 
-const leaveChat = () => {
-  appStore.closeWebSocket();
-};
-
 onMounted(async () => {
-  appStore.initWebSocket(route.params.roomName);
+  await appStore.getUserById(sessionStorage.getItem("recipientId"));
+  console.log(profileUser.value);
+  appStore.initWebSocket(
+    route.params.roomName,
+    currentUser.value,
+    profileUser.value
+  );
   scrollToBottom();
 });
 
