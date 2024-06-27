@@ -188,7 +188,6 @@ export const useAppStore = defineStore("app", {
     async updateLegend(legend) {
       this.isLoading = true;
       try {
-        console.log("store legend", legend);
         const audio = new Audio(require("@/assets/sounds/lipstick.mp3"));
         audio.play();
         await apiClient.patch(`/flop/update/${legend.id}/`, legend, {
@@ -219,9 +218,7 @@ export const useAppStore = defineStore("app", {
       };
 
       this.websocket.onmessage = (event) => {
-        console.log("event", event);
         const data = JSON.parse(event.data);
-        console.log("data", data);
         if (data.message) {
           this.messages.push({
             message: data.message,

@@ -1,7 +1,7 @@
 <template>
   <div class="chat-room__wrapper" v-if="currentUser">
     <div class="chat-room">
-      <div class="chat-room__header">
+      <div v-if="profileUser" class="chat-room__header">
         <img
           :src="
             profileUser.avatar
@@ -106,12 +106,15 @@ onUnmounted(() => {
   appStore.closeWebSocket();
 });
 
-watch(messages.value, async (newMessages, oldMessages) => {
-  if (newMessages.length > oldMessages.length) {
+watch(
+  messages.value,
+  async () => {
+    console.log("tick");
     await nextTick();
     scrollToBottom();
-  }
-});
+  },
+  { immediate: true, deep: true, flush: "post" }
+);
 </script>
 
 <style scoped>
