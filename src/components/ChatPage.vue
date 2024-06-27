@@ -2,7 +2,16 @@
   <div class="chat-room__wrapper" v-if="currentUser">
     <div class="chat-room">
       <div class="chat-room__header">
-        <h3>FlopoGram</h3>
+        <img
+          :src="
+            profileUser.avatar
+              ? profileUser.avatar
+              : require('../assets/images/placeholder.png')
+          "
+          alt="User Avatar"
+          class="user-avatar"
+        />
+        <h3>{{ profileUser.username }}</h3>
       </div>
       <div class="chat-room__messages" ref="messagesContainer">
         <div
@@ -48,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { useAppStore } from "@/store/app.js";
 
 const appStore = useAppStore();
@@ -76,13 +85,15 @@ const sendMessage = async () => {
 const scrollToBottom = () => {
   const container = messagesContainer.value;
   if (container) {
-    container.scrollTop = container.scrollHeight;
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth",
+    });
   }
 };
 
 onMounted(async () => {
   await appStore.getUserById(sessionStorage.getItem("recipientId"));
-  console.log(profileUser.value);
   appStore.initWebSocket(
     route.params.roomName,
     currentUser.value,
@@ -93,6 +104,13 @@ onMounted(async () => {
 
 onUnmounted(() => {
   appStore.closeWebSocket();
+});
+
+watch(messages.value, async (newMessages, oldMessages) => {
+  if (newMessages.length > oldMessages.length) {
+    await nextTick();
+    scrollToBottom();
+  }
 });
 </script>
 
@@ -115,7 +133,6 @@ onUnmounted(() => {
 
 .chat-room__header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   width: 100%;
   margin-bottom: 20px;
@@ -125,6 +142,21 @@ onUnmounted(() => {
   max-height: 400px;
   overflow-y: auto;
   margin-bottom: 20px;
+  padding-right: 10px;
+}
+
+.chat-room__messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-room__messages::-webkit-scrollbar-thumb {
+  background-color: #d2d7d9;
+  border-radius: 10px;
+}
+
+.chat-room__messages::-webkit-scrollbar-track {
+  background: #ffffff;
+  border-radius: 10px;
 }
 
 .message {
@@ -199,5 +231,12 @@ onUnmounted(() => {
 .chat-room__button--send:hover,
 .chat-room__button--leave:hover {
   background-color: #10aae2;
+}
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
 }
 </style>
