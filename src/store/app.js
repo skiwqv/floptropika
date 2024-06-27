@@ -203,18 +203,29 @@ export const useAppStore = defineStore("app", {
       }
     },
     // WebSocket actions
-    initWebSocket(roomName) {
+    initWebSocket(roomName, sender, res) {
       this.websocket = new WebSocket(
         `wss://flopproject-1.onrender.com/ws/chat/${roomName}/`
       );
-      this.websocket.onopen = () => {
+      this.websocket.onopen = (event) => {
         console.log("WebSocket connection opened");
-        // this.websocket.send(
-        //   JSON.stringify({
-        //     sender: currentUser,
-        //     recipient: elseUser,
-        //   })
-        // );
+        if (sender) {
+          this.websocket.send(
+            JSON.stringify({
+              type: "get_users",
+              sender: sender.username,
+              recipient: res.username,
+            })
+          );
+          console.log("event", event);
+          // const data = JSON.parse(event.data);
+          // this.messages.push({
+          //   message: data.message,
+          //   sender: data.sender,
+          //   recipient: data.recipient,
+          //   avatar: data.avatar,
+          // });
+        }
       };
 
       this.websocket.onmessage = (event) => {
@@ -230,17 +241,13 @@ export const useAppStore = defineStore("app", {
       };
 
       this.websocket.onclose = (event) => {
-        console.log(
-          "WebSocket connection closed with error:",
-          event.code,
-          event.reason
-        );
+        console.log("WebSocket connection closed with error:", event, event);
         this.messages = [];
         this.websocket = null;
       };
 
-      this.websocket.onerror = (error) => {
-        console.error("WebSocket error:", error);
+      this.websocket.onerror = (event) => {
+        console.error("WebSocket error:", event);
       };
     },
 
@@ -250,6 +257,7 @@ export const useAppStore = defineStore("app", {
         audio.play();
         this.websocket.send(
           JSON.stringify({
+            type: "chat_message",
             message: message.content,
             sender: message.sender.username,
             recipient: message.recipient.username,
