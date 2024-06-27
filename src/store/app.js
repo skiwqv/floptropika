@@ -235,6 +235,7 @@ export const useAppStore = defineStore("app", {
           event.code,
           event.reason
         );
+        this.messages = [];
         this.websocket = null;
       };
 
