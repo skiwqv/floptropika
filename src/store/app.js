@@ -246,6 +246,8 @@ export const useAppStore = defineStore("app", {
 
     sendMessage(message) {
       if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+        const audio = new Audio(require("@/assets/sounds/notif.mp3"));
+        audio.play();
         this.websocket.send(
           JSON.stringify({
             message: message.content,
