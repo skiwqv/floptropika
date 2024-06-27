@@ -109,7 +109,6 @@ onUnmounted(() => {
 watch(
   messages.value,
   async () => {
-    console.log("tick");
     await nextTick();
     scrollToBottom();
   },
