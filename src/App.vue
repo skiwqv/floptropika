@@ -14,17 +14,7 @@ import Notification from "@/components/NotificationComp.vue";
 
 const appStore = useAppStore();
 
-const simulateClick = () => {
-  const clickEvent = new MouseEvent("click", {
-    view: window,
-    bubbles: true,
-    cancelable: true,
-  });
-  document.documentElement.dispatchEvent(clickEvent);
-};
-
 onMounted(async () => {
-  simulateClick();
   await appStore.getCurrentUser();
 });
 </script>
