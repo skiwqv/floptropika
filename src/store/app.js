@@ -205,9 +205,9 @@ export const useAppStore = defineStore("app", {
     // WebSocket actions
     initWebSocket(roomName, sender, res) {
       this.websocket = new WebSocket(
-        `wss://flopproject-1.onrender.com/ws/chat/${roomName}/`
+        `wss://flopproject-1.onrender.com/ws/chat/${roomName}/?token=${this.accessToken}`
       );
-      this.websocket.onopen = (event) => {
+      this.websocket.onopen = () => {
         console.log("WebSocket connection opened");
         if (sender) {
           this.websocket.send(
@@ -217,14 +217,6 @@ export const useAppStore = defineStore("app", {
               recipient: res.username,
             })
           );
-          console.log("event", event);
-          // const data = JSON.parse(event.data);
-          // this.messages.push({
-          //   message: data.message,
-          //   sender: data.sender,
-          //   recipient: data.recipient,
-          //   avatar: data.avatar,
-          // });
         }
       };
 
