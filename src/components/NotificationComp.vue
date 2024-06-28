@@ -5,7 +5,12 @@
     class="notifications"
     @click="toChat(notification)"
   >
-    <transition-group name="fade" tag="div" class="notifications__list">
+    <transition-group
+      name="fade"
+      tag="div"
+      class="notifications__list"
+      v-if="notification"
+    >
       <div class="notification">
         <div class="notification__header">
           <!-- <img
@@ -77,7 +82,9 @@ const toChat = (id) => {
 };
 
 onMounted(() => {
-  initWebSocket();
+  if (appStore.accessToken) {
+    initWebSocket();
+  }
 });
 
 onBeforeUnmount(() => {
