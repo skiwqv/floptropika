@@ -27,6 +27,13 @@
       active-class="header__button_active"
       >Login</router-link
     >
+    <img
+      v-if="currentUser"
+      @click="soundHandler"
+      :src="isSound"
+      alt="sound"
+      class="sound__icon"
+    />
     <div v-if="currentUser" class="user-menu" @click="toggleDropdown">
       <img
         :src="
@@ -61,6 +68,19 @@ const isDropdownVisible = ref(false);
 const toggleDropdown = () => {
   isDropdownVisible.value = !isDropdownVisible.value;
 };
+
+const getSound = computed(() => appStore.getSound);
+
+const soundHandler = () => {
+  appStore.soundHandler();
+};
+
+const isSound = computed(() => {
+  if (getSound.value == true) {
+    return require("../assets/images/sound_on.svg");
+  }
+  return require("../assets/images/sound_off.svg");
+});
 
 const toHome = () => {
   router.push("/");
@@ -204,5 +224,34 @@ const logOut = async () => {
 .dropdown button:hover {
   background-color: #10aae2;
   box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
+}
+.sound__icon {
+  width: 30px;
+  background-color: transparent;
+  margin-right: 10px;
+  cursor: pointer;
+  height: 30px;
+}
+
+@keyframes swing {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(15deg);
+  }
+  50% {
+    transform: rotate(-15deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.sound__icon:hover {
+  animation: swing 0.5s ease;
 }
 </style>

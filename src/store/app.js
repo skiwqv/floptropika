@@ -19,13 +19,15 @@ export const useAppStore = defineStore("app", {
     isLoading: false,
     userById: null,
     websocket: null,
-    messages: [], // добавить массив для хранения сообщений чата
+    messages: [],
+    isSound: false,
   }),
   getters: {
     getUser: (state) => state.currentUser,
     getAllLegends: (state) => state.legends,
     profileUser: (state) => state.userById,
-    chatMessages: (state) => state.messages, // добавить геттер для сообщений чата
+    chatMessages: (state) => state.messages,
+    getSound: (state) => state.isSound,
   },
   actions: {
     async signIn(user) {
@@ -261,6 +263,9 @@ export const useAppStore = defineStore("app", {
       if (this.websocket) {
         this.websocket.close();
       }
+    },
+    soundHandler() {
+      this.isSound = !this.isSound;
     },
   },
 });

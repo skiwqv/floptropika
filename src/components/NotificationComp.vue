@@ -39,11 +39,17 @@ const currentUser = computed(() => appStore.getUser);
 const notifications = ref([]);
 const lastNotification = ref(null);
 
+const getSound = computed(() => appStore.getSound);
+
 const addNotification = (notification) => {
   if (lastNotification.value !== notification) {
     notifications.value.unshift(notification);
     const audio = new Audio(require("@/assets/sounds/poosay.mp3"));
-    audio.play();
+    if (getSound.value == true) {
+      audio.play();
+    } else {
+      audio.muted;
+    }
     console.log(notification);
     setTimeout(() => {
       notifications.value.pop();
