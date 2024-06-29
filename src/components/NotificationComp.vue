@@ -1,31 +1,26 @@
 <template>
-  <div
-    v-for="notification in notifications"
-    :key="notification"
-    class="notifications"
-    @click="toChat(notification)"
-  >
-    <transition-group
-      name="fade"
-      tag="div"
-      class="notifications__list"
-      v-if="notification"
-    >
-      <div class="notification">
+  <div class="notifications">
+    <transition-group name="fade" tag="div" class="notifications__list">
+      <div
+        v-for="notification in notifications"
+        :key="notification"
+        class="notification"
+        @click="toChat(notification)"
+      >
         <div class="notification__header">
-          <!-- <img
+          <img
             :src="
-              notification.avatar
-                ? notification.avatar
+              notification.sender_avatar
+                ? notification.sender_avatar
                 : require('../assets/images/placeholder.png')
             "
             alt="User Avatar"
             class="notification__avatar"
-          /> -->
+          />
           <span class="notification__username">{{ notification.sender }}</span>
         </div>
         <div class="notification__body">
-          <p>{{ notification.message }}</p>
+          <p>{{ notification.notification }}</p>
         </div>
       </div>
     </transition-group>
@@ -33,37 +28,48 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useAppStore } from "@/store/app.js";
 import router from "@/router";
 
 const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
 const notifications = ref([]);
+const lastNotification = ref(null);
 
 const addNotification = (notification) => {
-  notifications.value.push(notification);
-  setTimeout(() => {
+  if (lastNotification.value !== notification) {
+    notifications.value.unshift(notification);
     const audio = new Audio(require("@/assets/sounds/poosay.mp3"));
     audio.play();
-    notifications.value.shift();
-  }, 3000);
+    console.log(notification);
+    setTimeout(() => {
+      notifications.value.pop();
+    }, 3000);
+    lastNotification.value = notification;
+  }
 };
 
-let websocket;
+let websocket = null;
 
 const initWebSocket = () => {
+  if (websocket) return;
+
   websocket = new WebSocket(
     `wss://flopproject-1.onrender.com/ws/notification/?token=${appStore.accessToken}`
   );
 
   websocket.onopen = () => {
     console.log("WebSocket connection opened");
+    websocket.send(
+      JSON.stringify({
+        type: "notification",
+      })
+    );
   };
 
   websocket.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    console.log("socket data", JSON.parse(event.data));
     addNotification(data);
   };
 
@@ -78,18 +84,12 @@ const initWebSocket = () => {
 };
 
 const toChat = (id) => {
-  router.push(`/room/${currentUser.value.id + id.id}`);
+  router.push(`/room/${currentUser.value.id + id.sender_id}`);
 };
 
 onMounted(() => {
   if (appStore.accessToken) {
     initWebSocket();
-  }
-});
-
-onBeforeUnmount(() => {
-  if (websocket) {
-    websocket.close();
   }
 });
 </script>
@@ -101,14 +101,14 @@ onBeforeUnmount(() => {
   top: 20px;
   right: 20px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: flex-end;
   z-index: 999;
 }
 
 .notifications__list {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 10px;
 }
 
