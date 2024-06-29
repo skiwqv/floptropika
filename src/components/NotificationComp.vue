@@ -17,7 +17,9 @@
             alt="User Avatar"
             class="notification__avatar"
           />
-          <span class="notification__username">{{ notification.sender }}</span>
+          <span class="notification__username">{{
+            notification.sender_username
+          }}</span>
         </div>
         <div class="notification__body">
           <p>{{ notification.notification }}</p>
