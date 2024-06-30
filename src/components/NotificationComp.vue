@@ -30,8 +30,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useAppStore } from "@/store/app.js";
+import { useRoute } from "vue-router";
 import router from "@/router";
 
 const appStore = useAppStore();
@@ -40,8 +41,13 @@ const notifications = ref([]);
 const lastNotification = ref(null);
 
 const getSound = computed(() => appStore.getSound);
+const route = useRoute();
 
 const addNotification = (notification) => {
+  if (route.path.startsWith("/room")) {
+    return;
+  }
+
   if (lastNotification.value !== notification) {
     notifications.value.unshift(notification);
     const audio = new Audio(require("@/assets/sounds/poosay.mp3"));
@@ -98,6 +104,13 @@ const toChat = (id) => {
 onMounted(() => {
   if (appStore.accessToken) {
     initWebSocket();
+  }
+});
+
+// Watch for route changes to reset the notifications array
+watch(route, () => {
+  if (route.path.startsWith("/room")) {
+    notifications.value = [];
   }
 });
 </script>
