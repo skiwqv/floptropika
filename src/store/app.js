@@ -51,7 +51,6 @@ export const useAppStore = defineStore("app", {
           apiClient.defaults.headers.common[
             "Authorization"
           ] = `Bearer ${response.data.access}`;
-          this.currentUser = response.data.user;
         }
         return response;
       } catch (error) {
@@ -211,38 +210,63 @@ export const useAppStore = defineStore("app", {
       this.websocket = new WebSocket(
         `wss://flopproject-1.onrender.com/ws/chat/${roomName}/?token=${this.accessToken}`
       );
+
       this.websocket.onopen = () => {
         if (sender) {
-          this.websocket.send(
-            JSON.stringify({
-              type: "get_users",
-              sender: sender.username,
-              recipient: res.username,
-            })
-          );
+          const getUsersMessage = JSON.stringify({
+            type: "get_users",
+            sender: sender.username,
+            recipient: res.username,
+          });
+          const markAsReadMessage = JSON.stringify({
+            type: "mark_as_read",
+            sender: sender.username,
+            recipient: res.username,
+          });
+
+          this.websocket.send(getUsersMessage);
+
+          this.websocket.send(markAsReadMessage);
         }
       };
 
       this.websocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
         if (data.message) {
           this.messages.push({
             message: data.message,
             sender: data.sender,
             recipient: data.recipient,
             avatar: data.avatar,
+            isRead: data.is_read,
+          });
+
+          if (data.sender !== this.currentUser.username) {
+            const markAsReadIncomingMessage = JSON.stringify({
+              type: "mark_as_read",
+              sender: this.currentUser.username,
+              recipient: res.username,
+            });
+
+            this.websocket.send(markAsReadIncomingMessage);
+          }
+        } else if (data.type === "messages_marked_as_read") {
+          this.messages.forEach((msg) => {
+            if (
+              msg.sender === data.sender &&
+              msg.recipient === data.recipient
+            ) {
+              msg.isRead = data.is_read;
+            }
           });
         }
       };
 
-      this.websocket.onclose = () => {
-        this.messages = [];
-        this.websocket = null;
-      };
-
       this.websocket.onerror = () => {};
-    },
 
+      this.websocket.onclose = () => {};
+    },
     sendMessage(message) {
       if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
         const audio = new Audio(require("@/assets/sounds/notif.mp3"));

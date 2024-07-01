@@ -38,8 +38,8 @@
           <div class="message__body">
             <div class="message__content">
               <p>{{ message.message }}</p>
-              <pre>{{ message }}</pre>
               <img
+                v-if="message.sender == currentUser.username"
                 :src="
                   message.isRead
                     ? require('../assets/images/tick-double-svgrepo-com.svg')
