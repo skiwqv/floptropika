@@ -98,7 +98,11 @@ const initWebSocket = () => {
 };
 
 const toChat = (id) => {
-  router.push(`/room/${currentUser.value.id + id.sender_id}`);
+  router.push({
+    name: "room",
+    params: { roomName: currentUser.value.id + id.sender_id },
+    query: { recipientId: id.sender_id },
+  });
 };
 
 onMounted(() => {

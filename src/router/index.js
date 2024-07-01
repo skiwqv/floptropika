@@ -40,6 +40,7 @@ const routes = [
     path: "/room/:roomName",
     name: "room",
     component: () => import("../views/Chat-view.vue"),
+    props: true,
   },
 ];
 

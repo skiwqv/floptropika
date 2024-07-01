@@ -117,7 +117,11 @@ const toggleEdit = () => {
 };
 
 const toChat = () => {
-  router.push(`/room/${currentUser.value.id + profileUser.value.id}`);
+  router.push({
+    name: "room",
+    params: { roomName: currentUser.value.id + profileUser.value.id },
+    query: { recipientId: profileUser.value.id },
+  });
 };
 
 const saveProfile = async () => {

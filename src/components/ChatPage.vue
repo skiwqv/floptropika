@@ -59,15 +59,17 @@
 <script setup>
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { useAppStore } from "@/store/app.js";
+import { useRoute } from "vue-router";
 
 const appStore = useAppStore();
+const route = useRoute();
 const currentUser = computed(() => appStore.getUser);
 const profileUser = computed(() => appStore.profileUser);
 const messages = computed(() => appStore.chatMessages);
 const newMessage = ref("");
 const messagesContainer = ref(null);
-import { useRoute } from "vue-router";
-const route = useRoute();
+
+const recipientId = route.query.recipientId;
 
 const sendMessage = async () => {
   if (newMessage.value.trim() === "") return;
@@ -78,6 +80,7 @@ const sendMessage = async () => {
   };
   appStore.sendMessage(message);
   newMessage.value = "";
+  console.log(route.query.recipientId);
   await nextTick();
   scrollToBottom();
 };
@@ -93,7 +96,7 @@ const scrollToBottom = () => {
 };
 
 onMounted(async () => {
-  await appStore.getUserById(sessionStorage.getItem("recipientId"));
+  await appStore.getUserById(recipientId);
   appStore.initWebSocket(
     route.params.roomName,
     currentUser.value,
