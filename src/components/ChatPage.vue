@@ -36,7 +36,19 @@
             <span class="message__username">{{ message.sender }}</span>
           </div>
           <div class="message__body">
-            <p>{{ message.message }}</p>
+            <div class="message__content">
+              <p>{{ message.message }}</p>
+              <pre>{{ message }}</pre>
+              <img
+                :src="
+                  message.isRead
+                    ? require('../assets/images/tick-double-svgrepo-com.svg')
+                    : require('../assets/images/tick-svgrepo-com.svg')
+                "
+                alt="is read"
+                class="read__icon"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -80,7 +92,6 @@ const sendMessage = async () => {
   };
   appStore.sendMessage(message);
   newMessage.value = "";
-  console.log(route.query.recipientId);
   await nextTick();
   scrollToBottom();
 };
@@ -170,6 +181,7 @@ watch(
   border-bottom: 1px solid #ddd;
   border-radius: 10px;
   max-width: 80%;
+  position: relative; /* Added */
 }
 
 .message--own {
@@ -203,6 +215,19 @@ watch(
 
 .message__body {
   font-size: 14px;
+}
+
+.message__content {
+  position: relative;
+  padding-right: 20px; /* Added padding to avoid overlap */
+}
+
+.read__icon {
+  width: 16px; /* Adjust the size as needed */
+  height: 16px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
 }
 
 .chat-room__input-container {

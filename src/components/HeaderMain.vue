@@ -19,6 +19,13 @@
         active-class="header__link_active"
         >Post Legend</router-link
       >
+      <router-link
+        v-if="currentUser"
+        to="/messages"
+        class="header__link"
+        active-class="header__link_active"
+        >Messages</router-link
+      >
     </div>
     <router-link
       v-if="!currentUser"

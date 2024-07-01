@@ -56,7 +56,6 @@ const addNotification = (notification) => {
     } else {
       audio.muted;
     }
-    console.log(notification);
     setTimeout(() => {
       notifications.value.pop();
     }, 3000);
@@ -74,7 +73,6 @@ const initWebSocket = () => {
   );
 
   websocket.onopen = () => {
-    console.log("WebSocket connection opened");
     websocket.send(
       JSON.stringify({
         type: "notification",
@@ -87,14 +85,11 @@ const initWebSocket = () => {
     addNotification(data);
   };
 
-  websocket.onclose = (event) => {
-    console.log("WebSocket connection closed:", event);
+  websocket.onclose = () => {
     websocket = null;
   };
 
-  websocket.onerror = (event) => {
-    console.error("WebSocket error:", event);
-  };
+  websocket.onerror = () => {};
 };
 
 const toChat = (id) => {

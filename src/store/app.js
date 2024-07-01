@@ -21,6 +21,7 @@ export const useAppStore = defineStore("app", {
     websocket: null,
     messages: [],
     isSound: false,
+    resentChats: [],
   }),
   getters: {
     getUser: (state) => state.currentUser,
@@ -28,6 +29,7 @@ export const useAppStore = defineStore("app", {
     profileUser: (state) => state.userById,
     chatMessages: (state) => state.messages,
     getSound: (state) => state.isSound,
+    getResentChats: (state) => state.resentChats,
   },
   actions: {
     async signIn(user) {
@@ -210,7 +212,6 @@ export const useAppStore = defineStore("app", {
         `wss://flopproject-1.onrender.com/ws/chat/${roomName}/?token=${this.accessToken}`
       );
       this.websocket.onopen = () => {
-        console.log("WebSocket connection opened");
         if (sender) {
           this.websocket.send(
             JSON.stringify({
@@ -234,15 +235,12 @@ export const useAppStore = defineStore("app", {
         }
       };
 
-      this.websocket.onclose = (event) => {
-        console.log("WebSocket connection closed with error:", event, event);
+      this.websocket.onclose = () => {
         this.messages = [];
         this.websocket = null;
       };
 
-      this.websocket.onerror = (event) => {
-        console.error("WebSocket error:", event);
-      };
+      this.websocket.onerror = () => {};
     },
 
     sendMessage(message) {
@@ -266,6 +264,15 @@ export const useAppStore = defineStore("app", {
     },
     soundHandler() {
       this.isSound = !this.isSound;
+    },
+    async setRessentChats() {
+      this.isLoading = true;
+      try {
+        const res = await apiClient.get("/chat/users_chat/");
+        this.resentChats = res.data;
+      } finally {
+        this.isLoading = false;
+      }
     },
   },
 });

@@ -42,6 +42,11 @@ const routes = [
     component: () => import("../views/Chat-view.vue"),
     props: true,
   },
+  {
+    path: "/messages",
+    name: "Messages",
+    component: () => import("../views/Messages-view.vue"),
+  },
 ];
 
 const router = createRouter({
