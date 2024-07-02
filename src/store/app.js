@@ -160,6 +160,18 @@ export const useAppStore = defineStore("app", {
         this.isLoading = false;
       }
     },
+    async sendMusic(user) {
+      this.isLoading = true;
+      try {
+        await apiClient.patch("/api/update/", user, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } finally {
+        this.isLoading = false;
+      }
+    },
     async getUserById(id) {
       this.isLoading = true;
       try {

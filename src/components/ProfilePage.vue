@@ -2,7 +2,7 @@
   <div class="profile__wrapper" v-if="profileUser">
     <div class="profile">
       <div class="profile__header">
-        <h3 ref="text">{{ profileUser.username }}`s Profile</h3>
+        <h3 ref="text">{{ profileUser.username }}'s Profile</h3>
         <button
           @click="toggleEdit"
           class="profile__button--edit"
@@ -42,7 +42,13 @@
           ref="fileInput"
           class="hidden-input"
         />
-        <span v-if="fileName" class="file-name">{{ fileName }}</span>
+        <input
+          type="file"
+          accept="audio/*"
+          @change="onMusicChange"
+          ref="musicInput"
+          class="hidden-input"
+        />
       </div>
       <div class="profile__field">
         <label class="profile__label">Username</label>
@@ -79,6 +85,25 @@
           class="profile__textarea"
         ></textarea>
       </div>
+      <div v-if="profileUser.profile_music" class="profile__music-container">
+        <audio
+          controls
+          :src="profileUser.profile_music"
+          class="audio-preview"
+        ></audio>
+      </div>
+      <span v-if="musicName" class="file-name">{{ musicName }}</span>
+      <div v-if="musicPreview" class="profile__music-container">
+        <audio controls :src="musicPreview" class="audio-preview"></audio>
+      </div>
+      <button
+        v-if="isEditing"
+        type="button"
+        class="upload-button"
+        @click="triggerMusicInput"
+      >
+        Choose Music
+      </button>
       <button
         v-if="currentUser.id != profileUser.id"
         @click="toChat"
@@ -110,6 +135,11 @@ const fileName = ref(null);
 const fileInput = ref(null);
 const imagePreview = ref(null);
 
+const musicSrc = ref(null);
+const musicName = ref(null);
+const musicInput = ref(null);
+const musicPreview = ref(null);
+
 const text = ref(null);
 
 const toggleEdit = () => {
@@ -130,13 +160,18 @@ const saveProfile = async () => {
     email: profileUser.value.email,
     avatar: imageSrc.value,
     bio: profileUser.value.bio,
+    profile_music: musicSrc.value,
   };
   await appStore.sendPhoto(user);
+  await appStore.sendMusic(user);
   await appStore.getCurrentUser();
   await appStore.getUserById(currentUser.value.id);
   imageSrc.value = null;
   fileName.value = null;
   imagePreview.value = null;
+  musicSrc.value = null;
+  musicName.value = null;
+  musicPreview.value = null;
   isEditing.value = false;
 };
 
@@ -147,9 +182,21 @@ const onFileChange = (event) => {
   imagePreview.value = URL.createObjectURL(file);
 };
 
+const onMusicChange = (event) => {
+  const file = event.target.files[0];
+  musicSrc.value = file;
+  musicName.value = file.name;
+  musicPreview.value = URL.createObjectURL(file);
+};
+
 const triggerFileInput = () => {
   fileInput.value.click();
 };
+
+const triggerMusicInput = () => {
+  musicInput.value.click();
+};
+
 onMounted(async () => {
   await appStore.getUserById(route.params.userId);
 });
@@ -295,5 +342,31 @@ onMounted(async () => {
 
 .hidden-input {
   display: none;
+}
+
+.profile__music-container {
+  margin-top: 20px;
+}
+
+.audio-preview {
+  width: 100%;
+  height: 50px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.audio-preview:hover,
+.audio-preview:focus {
+  border: 1px solid #2596be;
+  box-shadow: 0 0 10px rgba(242, 0, 145, 0.8);
+}
+
+.audio-preview::-webkit-media-controls-panel {
+  background-color: #f9f9f9;
+  border-radius: 5px;
 }
 </style>
