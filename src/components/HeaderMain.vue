@@ -1,11 +1,11 @@
 <template>
-  <div class="header">
+  <header class="header">
     <img
       src="../assets/images/rename.png"
       class="header__logo"
       @click="toHome"
     />
-    <div class="header__wrapper">
+    <nav class="header__nav">
       <router-link
         to="/about"
         class="header__link"
@@ -26,67 +26,98 @@
         active-class="header__link_active"
         >Messages</router-link
       >
-    </div>
-    <router-link
-      v-if="!currentUser"
-      to="/login"
-      class="header__button"
-      active-class="header__button_active"
-      >Login</router-link
-    >
-    <img
-      v-if="currentUser"
-      @click="soundHandler"
-      :src="isSound"
-      alt="sound"
-      class="sound__icon"
-    />
-    <div v-if="currentUser" class="user-menu" @click="toggleDropdown">
+      <router-link
+        v-if="!currentUser"
+        to="/login"
+        class="header__button"
+        active-class="header__button_active"
+        >Login</router-link
+      >
+    </nav>
+    <div v-if="currentUser" class="header__user">
       <img
-        :src="
-          currentUser.avatar
-            ? currentUser.avatar
-            : require('../assets/images/placeholder.png')
-        "
-        alt="User Avatar"
-        class="user-avatar"
+        @click="soundHandler"
+        :src="isSound"
+        alt="sound"
+        class="header__sound-icon"
       />
-
-      {{ currentUser.username }}
-      <span class="arrow">&#9662;</span>
-      <div v-if="isDropdownVisible" class="dropdown">
-        <button @click="toProfile">Profile</button>
-        <button @click="toLegends">My Legends</button>
-        <button @click="logOut">Logout</button>
+      <div class="header__user-menu" @click="toggleDropdown">
+        <img
+          :src="currentUser.avatar || placeholderAvatar"
+          alt="User Avatar"
+          class="header__user-avatar"
+        />
+        <span class="header__username">{{ currentUser.username }}</span>
+        <span class="header__arrow">&#9662;</span>
+        <div v-if="isDropdownVisible" class="header__dropdown">
+          <button @click="toProfile">Profile</button>
+          <button @click="toLegends">My Legends</button>
+          <button @click="logOut">Logout</button>
+        </div>
       </div>
     </div>
-  </div>
+    <button class="header__burger" @click="toggleSidebar">&#9776;</button>
+    <div :class="['sidebar', { 'sidebar--open': isSidebarOpen }]">
+      <button class="sidebar__close" @click="toggleSidebar">&times;</button>
+      <router-link
+        to="/about"
+        class="sidebar__link"
+        active-class="sidebar__link_active"
+        >About us</router-link
+      >
+      <router-link
+        v-if="currentUser"
+        to="/postLegend"
+        class="sidebar__link"
+        active-class="sidebar__link_active"
+        >Post Legend</router-link
+      >
+      <router-link
+        v-if="currentUser"
+        to="/messages"
+        class="sidebar__link"
+        active-class="sidebar__link_active"
+        >Messages</router-link
+      >
+      <router-link
+        v-if="!currentUser"
+        to="/login"
+        class="sidebar__button"
+        active-class="sidebar__button_active"
+        >Login</router-link
+      >
+    </div>
+  </header>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
-import { useAppStore } from "@/store/app.js";
-import router from "@/router";
+import { useAppStore } from "@/store/app";
+import { useRouter } from "vue-router";
 
 const appStore = useAppStore();
+const router = useRouter();
 const currentUser = computed(() => appStore.getUser);
 const isDropdownVisible = ref(false);
+const isSidebarOpen = ref(false);
+const placeholderAvatar = require("../assets/images/placeholder.png");
 
 const toggleDropdown = () => {
   isDropdownVisible.value = !isDropdownVisible.value;
 };
 
-const getSound = computed(() => appStore.getSound);
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value;
+};
 
 const soundHandler = () => {
   appStore.soundHandler();
 };
 
 const isSound = computed(() => {
-  if (getSound.value == true) {
-    return require("../assets/images/sound_on.svg");
-  }
-  return require("../assets/images/sound_off.svg");
+  return appStore.getSound
+    ? require("../assets/images/sound_on.svg")
+    : require("../assets/images/sound_off.svg");
 });
 
 const toHome = () => {
@@ -111,133 +142,209 @@ const logOut = async () => {
 
 <style scoped>
 .header {
-  background-color: #ffffffad;
   display: flex;
-  height: 80px;
   justify-content: space-between;
   align-items: center;
+  background-color: rgba(255, 255, 255, 0.68);
   padding: 0 20px;
+  height: 80px;
+  position: relative;
 }
 
 .header__logo {
   max-width: 70px;
   max-height: 40px;
   cursor: pointer;
-  transition: box-shadow 0.3s, transform 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
+
 .header__logo:hover {
   transform: rotate(360deg);
   box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
 }
 
-.header__wrapper {
+.header__nav {
   display: flex;
-  justify-content: center;
+  align-items: center;
   flex-grow: 1;
+  justify-content: center;
 }
 
-.header__link {
-  text-decoration: none;
+.header__link,
+.header__button {
   font-size: 18px;
-  color: black;
   margin: 0 10px;
-  transition: text-shadow 0.3s;
+  text-decoration: none;
+  color: black;
+  transition: text-shadow 0.3s, background-color 0.3s, box-shadow 0.3s;
+}
+
+.header__link:hover,
+.header__button:hover {
+  text-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
 }
 
 .header__button {
   background-color: #2596be;
-  border: none;
   padding: 10px 20px;
-  font-size: 18px;
   border-radius: 9px;
   cursor: pointer;
-  color: black;
-  text-decoration: none;
-  transition: background-color 0.3s, box-shadow 0.3s;
+  border: none;
 }
 
-.header__button:hover {
-  background-color: #10aae2;
-  box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
-}
-.header__link:hover {
-  text-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
-}
-
-.button__link {
-  text-decoration: none;
-  color: inherit;
-}
-.header__link_active {
-  text-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
-  color: white;
-}
+.header__link_active,
 .header__button_active {
-  background-color: #10aae2;
   color: white;
-  box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
-  border-radius: 9px;
+  text-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
 }
 
-.user-menu {
-  position: relative;
-  cursor: pointer;
+.header__user {
   display: flex;
   align-items: center;
-  font-size: 18px;
 }
 
-.user-avatar {
+.header__sound-icon {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: transform 0.3s;
+}
+
+.header__sound-icon:hover {
+  animation: swing 0.5s ease;
+}
+
+.header__user-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.header__user-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  margin-right: 10px;
   object-fit: cover;
+  margin-right: 10px;
 }
 
-.arrow {
+.header__username {
+  font-size: 18px;
+}
+
+.header__arrow {
   margin-left: 5px;
 }
 
-.dropdown {
+.header__dropdown {
   position: absolute;
+  top: 50px;
+  right: -16px;
   display: flex;
   flex-direction: column;
   background-color: white;
   border: 1px solid #ccc;
-  right: -16px;
-  top: 50px;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   padding: 10px;
-  margin-top: 10px;
-  max-width: 200px;
   z-index: 999;
 }
 
-.dropdown button {
+.header__dropdown button {
+  font-size: 18px;
   background-color: #2596be;
   border: none;
   padding: 10px 20px;
-  font-size: 18px;
   border-radius: 9px;
   cursor: pointer;
   color: black;
-  text-decoration: none;
   transition: background-color 0.3s, box-shadow 0.3s;
   margin-top: 10px;
 }
 
-.dropdown button:hover {
+.header__dropdown button:hover {
   background-color: #10aae2;
   box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
 }
-.sound__icon {
-  width: 30px;
-  background-color: transparent;
-  margin-right: 10px;
+
+.header__burger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 30px;
   cursor: pointer;
-  height: 30px;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -450px;
+  width: 250px;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+  transition: right 0.3s ease-in-out;
+  z-index: 800;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar--open {
+  right: 0;
+}
+
+.sidebar__close {
+  align-self: flex-end;
+  font-size: 30px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.sidebar__link,
+.sidebar__button {
+  font-size: 24px;
+  margin: 10px 0;
+  text-decoration: none;
+  color: black;
+  transition: text-shadow 0.3s, background-color 0.3s, box-shadow 0.3s;
+}
+
+.sidebar__link:hover,
+.sidebar__button:hover {
+  text-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
+}
+
+.sidebar__button {
+  background-color: #2596be;
+  padding: 10px 20px;
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border: none;
+}
+
+.sidebar__link_active,
+.sidebar__button_active {
+  color: white;
+  background-color: #10aae2;
+  border-radius: 9px;
+  height: 40px;
+  box-shadow: 0 0 10px rgba(16, 170, 226, 0.8);
+}
+
+@media (max-width: 576px) {
+  .header__nav {
+    display: none;
+  }
+
+  .header__burger {
+    display: block;
+  }
 }
 
 @keyframes swing {
@@ -256,9 +363,5 @@ const logOut = async () => {
   100% {
     transform: rotate(0deg);
   }
-}
-
-.sound__icon:hover {
-  animation: swing 0.5s ease;
 }
 </style>
