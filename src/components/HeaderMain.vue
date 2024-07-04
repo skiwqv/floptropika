@@ -122,6 +122,7 @@ const isSound = computed(() => {
 
 const toHome = () => {
   router.push("/");
+  console.log(currentUser.value);
 };
 
 const toProfile = async () => {

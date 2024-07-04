@@ -15,7 +15,9 @@ import Notification from "@/components/NotificationComp.vue";
 const appStore = useAppStore();
 
 onMounted(async () => {
-  await appStore.getCurrentUser();
+  if (appStore.accessToken) {
+    await appStore.getCurrentUser();
+  }
 });
 </script>
 

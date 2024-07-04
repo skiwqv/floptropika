@@ -1,56 +1,63 @@
 <template>
   <div class="login__wrapper">
-    <form class="login">
+    <form @submit.prevent="register" class="login">
       <h3>FLOPTROPIKA</h3>
       <input
         v-model="user.username"
         type="text"
         placeholder="Username"
         class="login__input"
-        required
+        :class="{ 'is-invalid': $v.user.username.$error }"
       />
+      <div v-if="$v.user.username.$error" class="error-message">
+        Username is required
+      </div>
+
       <input
         v-model="user.email"
         type="email"
         placeholder="Email"
         class="login__input"
-        required
+        :class="{ 'is-invalid': $v.user.email.$error }"
       />
+      <div v-if="$v.user.email.$error" class="error-message">
+        Valid email is required
+      </div>
+
       <input
         v-model="user.password"
         type="password"
         placeholder="Password"
         class="login__input"
-        required
+        :class="{ 'is-invalid': $v.user.password.$error }"
       />
+      <div v-if="$v.user.password.$error" class="error-message">
+        Password must be at least 8 characters long and contain at least one
+        uppercase letter
+      </div>
+
       <input
         v-model="confirmPassword"
         type="password"
         placeholder="Confirm Password"
         class="login__input"
-        required
+        :class="{ 'is-invalid': $v.confirmPassword.$error }"
       />
-      <div
-        v-confetti="{ particleCount: 200, force: 1 }"
-        class="confetti"
-        v-if="isVisible"
-      ></div>
-      <button
-        @click.prevent="register"
-        class="login__button"
-        :disabled="isDisabled"
-      >
-        Register
-      </button>
+      <div v-if="$v.confirmPassword.$error" class="error-message">
+        Passwords must match
+      </div>
+      <button class="login__button">Register</button>
     </form>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
-import { vConfetti } from "@neoconfetti/vue";
+import { useVuelidate } from "@vuelidate/core";
+import { required, email, minLength, sameAs } from "@vuelidate/validators";
 import { useAppStore } from "@/store/app";
 import router from "@/router";
+
 const appStore = useAppStore();
 
 const user = ref({
@@ -58,22 +65,35 @@ const user = ref({
   email: "",
   password: "",
 });
-const isVisible = ref(false);
 const confirmPassword = ref("");
 
-const isDisabled = computed(() => {
-  return !(
-    user.value.username !== "" &&
-    user.value.password !== "" &&
-    user.value.email !== "" &&
-    confirmPassword.value !== ""
-  );
-});
+const rules = computed(() => ({
+  user: {
+    username: { required },
+    email: { required, email },
+    password: {
+      required,
+      minLength: minLength(8),
+      hasUpperCase: (value) =>
+        /[A-Z]/.test(value) || "Must contain at least one uppercase letter",
+    },
+  },
+  confirmPassword: {
+    required,
+    sameAsPassword: sameAs(user.value.password),
+  },
+}));
+
+const $v = useVuelidate(rules, { user, confirmPassword });
 
 const register = async () => {
+  $v.value.$touch();
+  if ($v.value.$invalid) {
+    return;
+  }
+
   const response = await appStore.register(user.value);
   if (response && response.status === 200) {
-    isVisible.value = true;
     router.push("/login");
     return response;
   }
@@ -114,6 +134,17 @@ const register = async () => {
 
 .login__input:focus {
   box-shadow: 0 0 10px rgba(242, 0, 145, 0.8);
+}
+
+.is-invalid {
+  border-color: red;
+}
+
+.error-message {
+  color: red;
+  font-size: 12px;
+  margin-top: -10px;
+  margin-bottom: 10px;
 }
 
 .login__button {
