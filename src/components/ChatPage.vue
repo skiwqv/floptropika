@@ -2,16 +2,26 @@
   <div class="chat-room__wrapper" v-if="currentUser">
     <div class="chat-room">
       <div v-if="profileUser" class="chat-room__header">
-        <img
-          :src="
-            profileUser.avatar
-              ? profileUser.avatar
-              : require('../assets/images/placeholder.png')
-          "
-          alt="User Avatar"
-          class="user-avatar"
-        />
-        <h3>{{ profileUser.username }}</h3>
+        <div class="user__wrapper">
+          <img
+            :src="
+              profileUser.avatar
+                ? profileUser.avatar
+                : require('../assets/images/placeholder.png')
+            "
+            alt="User Avatar"
+            class="user-avatar"
+          />
+          <h3>{{ profileUser.username }}</h3>
+        </div>
+        <div>
+          <img
+            @click="openModal"
+            class="icon__call"
+            src="../assets/images/phone-svgrepo-com.svg"
+            alt="icon call"
+          />
+        </div>
       </div>
       <div class="chat-room__messages" ref="messagesContainer">
         <div
@@ -65,6 +75,11 @@
         </button>
       </div>
     </div>
+    <CallModal
+      :isVisible="isVisible"
+      :profileUser="profileUser"
+      @close="openModal"
+    ></CallModal>
   </div>
 </template>
 
@@ -73,6 +88,8 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { useAppStore } from "@/store/app.js";
 import { useRoute } from "vue-router";
 
+import CallModal from "@/components/CallModal.vue";
+
 const appStore = useAppStore();
 const route = useRoute();
 const currentUser = computed(() => appStore.getUser);
@@ -80,6 +97,7 @@ const profileUser = computed(() => appStore.profileUser);
 const messages = computed(() => appStore.chatMessages);
 const newMessage = ref("");
 const messagesContainer = ref(null);
+const isVisible = ref(false);
 
 const recipientId = route.query.recipientId;
 
@@ -94,6 +112,10 @@ const sendMessage = async () => {
   newMessage.value = "";
   await nextTick();
   scrollToBottom();
+};
+
+const openModal = () => {
+  isVisible.value = !isVisible.value;
 };
 
 const scrollToBottom = () => {
@@ -150,8 +172,14 @@ watch(
 .chat-room__header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
   margin-bottom: 20px;
+}
+
+.user__wrapper {
+  display: flex;
+  align-items: center;
 }
 
 .chat-room__messages {
@@ -268,5 +296,15 @@ watch(
   border-radius: 50%;
   margin-right: 10px;
   object-fit: cover;
+}
+
+.icon__call {
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  transition: rotate 0.3s ease;
+}
+.icon__call:hover {
+  rotate: 10deg;
 }
 </style>
