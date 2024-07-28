@@ -148,65 +148,74 @@ const sendMessage = async () => {
   await nextTick();
   scrollToBottom();
 };
-
 const startCall = async () => {
   try {
+    console.log("Starting call...");
     isVisible.value = true;
+
     const connection = new WebSocket(
       `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
     );
 
     connection.onerror = (error) => {
-      console.log(error);
+      console.error("WebSocket error:", error);
     };
 
     connection.onopen = async () => {
+      console.log("WebSocket connection opened");
+
       const peerConnectionConfig = {
-        iceServers: [
-          {
-            urls: "stun:stun.l.google.com:19302",
-          },
-        ],
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       };
       const pc = new RTCPeerConnection(peerConnectionConfig);
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log("candidate", event.candidate);
+          console.log("Sending ICE candidate:", event.candidate);
           connection.send(
             JSON.stringify({
-              type: "ice-candidate",
+              type: "ice_candidate",
               candidate: event.candidate,
             })
           );
         }
       };
 
-      // Обработка входящих аудиотреков
       pc.ontrack = (event) => {
         console.log("ontrack event:", event);
         if (event.streams && event.streams[0]) {
-          audioElement.value.srcObject = event.streams[0];
-          audioElement.value
-            .play()
-            .catch((error) => console.log("Audio play error:", error));
+          console.log("Received stream:", event.streams[0]);
+          if (audioElement.value) {
+            audioElement.value.srcObject = event.streams[0];
+            audioElement.value
+              .play()
+              .catch((error) => console.error("Audio play error:", error));
+          } else {
+            console.error("audioElement is null");
+          }
         } else {
           let inboundStream = new MediaStream();
           event.track.onunmute = () => {
             inboundStream.addTrack(event.track);
-            audioElement.value.srcObject = inboundStream;
-            audioElement.value
-              .play()
-              .catch((error) => console.log("Audio play error:", error));
+            console.log("Adding track to inboundStream:", event.track);
+            if (audioElement.value) {
+              audioElement.value.srcObject = inboundStream;
+              audioElement.value
+                .play()
+                .catch((error) => console.error("Audio play error:", error));
+            } else {
+              console.error("audioElement is null");
+            }
           };
         }
       };
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioElement.value.srcObject = stream;
-      audioElement.value
-        .play()
-        .catch((error) => console.log("Audio play error:", error));
+      if (!stream) {
+        console.error("Failed to get media stream");
+        return;
+      }
+      console.log("Got local media stream:", stream);
 
       stream.getTracks().forEach((track) => {
         console.log("Adding local track:", track);
@@ -215,29 +224,37 @@ const startCall = async () => {
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      connection.send(JSON.stringify(offer));
+      connection.send(JSON.stringify({ type: "offer", sdp: offer.sdp }));
+      console.log("Sent offer:", offer);
 
       connection.onmessage = async (event) => {
         const message = JSON.parse(event.data);
         console.log("Received message:", message);
 
         if (message.type === "offer") {
+          console.log("Received offer:", message);
           await pc.setRemoteDescription(new RTCSessionDescription(message));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          connection.send(JSON.stringify(answer));
+          connection.send(JSON.stringify({ type: "answer", sdp: answer.sdp }));
+          console.log("Sent answer:", answer);
         } else if (message.type === "answer") {
+          console.log("Received answer:", message);
           await pc.setRemoteDescription(new RTCSessionDescription(message));
         } else if (message.type === "ice-candidate") {
-          await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+          try {
+            console.log("Received ICE candidate:", message.candidate);
+            await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+          } catch (e) {
+            console.error("Error adding received ice candidate", e);
+          }
         }
       };
     };
   } catch (error) {
-    console.log("Error in startCall:", error);
+    console.error("Error in startCall:", error);
   }
 };
-
 const endCall = () => {
   isVisible.value = false;
 };
