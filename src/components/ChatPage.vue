@@ -182,13 +182,34 @@ const startCall = async () => {
         }
       };
 
+      // Обработка входящих аудиотреков
+      pc.ontrack = (event) => {
+        console.log("ontrack event:", event);
+        if (event.streams && event.streams[0]) {
+          audioElement.value.srcObject = event.streams[0];
+          audioElement.value
+            .play()
+            .catch((error) => console.log("Audio play error:", error));
+        } else {
+          let inboundStream = new MediaStream();
+          event.track.onunmute = () => {
+            inboundStream.addTrack(event.track);
+            audioElement.value.srcObject = inboundStream;
+            audioElement.value
+              .play()
+              .catch((error) => console.log("Audio play error:", error));
+          };
+        }
+      };
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioElement.value.srcObject = stream;
-      audioElement.value.play();
+      audioElement.value
+        .play()
+        .catch((error) => console.log("Audio play error:", error));
 
       stream.getTracks().forEach((track) => {
-        console.log("stream", stream);
-        console.log("track", track);
+        console.log("Adding local track:", track);
         pc.addTrack(track, stream);
       });
 
@@ -198,6 +219,7 @@ const startCall = async () => {
 
       connection.onmessage = async (event) => {
         const message = JSON.parse(event.data);
+        console.log("Received message:", message);
 
         if (message.type === "offer") {
           await pc.setRemoteDescription(new RTCSessionDescription(message));
@@ -212,7 +234,7 @@ const startCall = async () => {
       };
     };
   } catch (error) {
-    console.log("err", error);
+    console.log("Error in startCall:", error);
   }
 };
 
