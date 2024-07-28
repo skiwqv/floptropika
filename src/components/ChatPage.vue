@@ -77,18 +77,18 @@
     </div>
     <div v-if="isVisible" class="modal">
       <div class="modal-content">
-        <div class="user__wrapper">
+        <div class="call__wrapper">
           <img
             :src="
               profileUser.avatar || require('../assets/images/placeholder.png')
             "
             alt="User Avatar"
-            class="user-avatar"
+            class="call-avatar"
           />
           <h3>{{ profileUser.username }}</h3>
         </div>
         <div class="control__wrapper">
-          <div class="microphone__icon-wrapper" @click="enableMicrophone">
+          <div class="microphone__icon-wrapper" @click="toggleMicrophone">
             <img :src="microphoneIcon" class="microphone__icon" />
           </div>
           <div class="cancel__call-wrapper" @click="endCall">
@@ -98,7 +98,7 @@
             />
           </div>
         </div>
-        <audio ref="audioElement" controls></audio>
+        <audio ref="audioElement" autoplay></audio>
       </div>
     </div>
   </div>
@@ -117,8 +117,24 @@ const messages = computed(() => appStore.chatMessages);
 const newMessage = ref("");
 const messagesContainer = ref(null);
 const isVisible = ref(false);
+const isMicrophoneEnabled = ref(true);
+const audioElement = ref(null);
 
 const recipientId = route.query.recipientId;
+
+const microphoneIcon = computed(() => {
+  return isMicrophoneEnabled.value
+    ? require("../assets/images/microphone-svgrepo-com.svg")
+    : require("../assets/images/microphone-slash-svgrepo-com.svg");
+});
+
+const toggleMicrophone = () => {
+  isMicrophoneEnabled.value = !isMicrophoneEnabled.value;
+  const tracks = audioElement.value.srcObject.getAudioTracks();
+  tracks.forEach((track) => {
+    track.enabled = isMicrophoneEnabled.value;
+  });
+};
 
 const sendMessage = async () => {
   if (newMessage.value.trim() === "") return;
@@ -133,8 +149,71 @@ const sendMessage = async () => {
   scrollToBottom();
 };
 
-const startCall = () => {
-  isVisible.value = true;
+const startCall = async () => {
+  try {
+    isVisible.value = true;
+    const connection = new WebSocket(
+      `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
+    );
+
+    connection.onerror = (error) => {
+      console.log(error);
+    };
+
+    connection.onopen = async () => {
+      const peerConnectionConfig = {
+        iceServers: [
+          {
+            urls: "stun:stun.l.google.com:19302",
+          },
+        ],
+      };
+      const pc = new RTCPeerConnection(peerConnectionConfig);
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log("candidate", event.candidate);
+          connection.send(
+            JSON.stringify({
+              type: "ice-candidate",
+              candidate: event.candidate,
+            })
+          );
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioElement.value.srcObject = stream;
+      audioElement.value.play();
+
+      stream.getTracks().forEach((track) => {
+        console.log("stream", stream);
+        console.log("track", track);
+        pc.addTrack(track, stream);
+      });
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      connection.send(JSON.stringify(offer));
+
+      connection.onmessage = async (event) => {
+        const message = JSON.parse(event.data);
+
+        if (message.type === "offer") {
+          await pc.setRemoteDescription(new RTCSessionDescription(message));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          connection.send(JSON.stringify(answer));
+        } else if (message.type === "answer") {
+          await pc.setRemoteDescription(new RTCSessionDescription(message));
+        } else if (message.type === "ice-candidate") {
+          await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+        }
+      };
+    };
+  } catch (error) {
+    console.log("err", error);
+  }
 };
 
 const endCall = () => {
@@ -163,18 +242,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   appStore.closeWebSocket();
-});
-
-const isMicrophoneEnabled = ref(true);
-
-const enableMicrophone = () => {
-  isMicrophoneEnabled.value = !isMicrophoneEnabled.value;
-};
-
-const microphoneIcon = computed(() => {
-  return isMicrophoneEnabled.value
-    ? require("../assets/images/microphone-svgrepo-com.svg")
-    : require("../assets/images/microphone-slash-svgrepo-com.svg");
 });
 
 watch(
@@ -359,6 +426,7 @@ watch(
   background-color: #fff;
   width: 90%;
   max-width: 400px;
+  height: 60%;
   padding: 20px;
   border-radius: 10px;
   text-align: center;
@@ -368,13 +436,13 @@ watch(
   gap: 20px;
 }
 
-.user__wrapper {
+.call__wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.user-avatar {
+.call-avatar {
   width: 100px;
   height: 100px;
   border-radius: 50%;
