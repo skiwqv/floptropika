@@ -16,7 +16,7 @@
         </div>
         <div>
           <img
-            @click="openModal"
+            @click="startCall"
             class="icon__call"
             src="../assets/images/phone-svgrepo-com.svg"
             alt="icon call"
@@ -75,11 +75,32 @@
         </button>
       </div>
     </div>
-    <CallModal
-      :isVisible="isVisible"
-      :profileUser="profileUser"
-      @close="openModal"
-    ></CallModal>
+    <div v-if="isVisible" class="modal">
+      <div class="modal-content">
+        <div class="user__wrapper">
+          <img
+            :src="
+              profileUser.avatar || require('../assets/images/placeholder.png')
+            "
+            alt="User Avatar"
+            class="user-avatar"
+          />
+          <h3>{{ profileUser.username }}</h3>
+        </div>
+        <div class="control__wrapper">
+          <div class="microphone__icon-wrapper" @click="enableMicrophone">
+            <img :src="microphoneIcon" class="microphone__icon" />
+          </div>
+          <div class="cancel__call-wrapper" @click="endCall">
+            <img
+              src="../assets/images/call-cancel-svgrepo-com.svg"
+              class="cancel__call"
+            />
+          </div>
+        </div>
+        <audio ref="audioElement" controls></audio>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -87,8 +108,6 @@
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { useAppStore } from "@/store/app.js";
 import { useRoute } from "vue-router";
-
-import CallModal from "@/components/CallModal.vue";
 
 const appStore = useAppStore();
 const route = useRoute();
@@ -114,8 +133,12 @@ const sendMessage = async () => {
   scrollToBottom();
 };
 
-const openModal = () => {
-  isVisible.value = !isVisible.value;
+const startCall = () => {
+  isVisible.value = true;
+};
+
+const endCall = () => {
+  isVisible.value = false;
 };
 
 const scrollToBottom = () => {
@@ -140,6 +163,18 @@ onMounted(async () => {
 
 onUnmounted(() => {
   appStore.closeWebSocket();
+});
+
+const isMicrophoneEnabled = ref(true);
+
+const enableMicrophone = () => {
+  isMicrophoneEnabled.value = !isMicrophoneEnabled.value;
+};
+
+const microphoneIcon = computed(() => {
+  return isMicrophoneEnabled.value
+    ? require("../assets/images/microphone-svgrepo-com.svg")
+    : require("../assets/images/microphone-slash-svgrepo-com.svg");
 });
 
 watch(
@@ -306,5 +341,83 @@ watch(
 }
 .icon__call:hover {
   rotate: 10deg;
+}
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  width: 90%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.user__wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.control__wrapper {
+  display: flex;
+  gap: 20px;
+}
+
+.microphone__icon-wrapper,
+.cancel__call-wrapper {
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.microphone__icon-wrapper {
+  background-color: #2596be;
+}
+
+.microphone__icon-wrapper:hover {
+  background-color: #1ba8db;
+}
+
+.microphone__icon {
+  width: 30px;
+}
+
+.cancel__call-wrapper {
+  background-color: red;
+}
+
+.cancel__call-wrapper:hover {
+  background-color: rgb(248, 62, 62);
+}
+
+.cancel__call {
+  width: 30px;
 }
 </style>
