@@ -120,6 +120,9 @@ const isVisible = ref(false);
 const isMicrophoneEnabled = ref(true);
 const audioElement = ref(null);
 
+let connection;
+let pc;
+
 const recipientId = route.query.recipientId;
 
 const microphoneIcon = computed(() => {
@@ -153,7 +156,7 @@ const startCall = async () => {
     console.log("Starting call...");
     isVisible.value = true;
 
-    const connection = new WebSocket(
+    connection = new WebSocket(
       `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
     );
 
@@ -167,7 +170,7 @@ const startCall = async () => {
       const peerConnectionConfig = {
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       };
-      const pc = new RTCPeerConnection(peerConnectionConfig);
+      pc = new RTCPeerConnection(peerConnectionConfig);
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -255,10 +258,27 @@ const startCall = async () => {
     console.error("Error in startCall:", error);
   }
 };
+
 const endCall = () => {
+  console.log("Ending call...");
+
+  if (pc) {
+    pc.getSenders().forEach((sender) => sender.track.stop());
+    pc.close();
+    pc = null;
+  }
+
+  if (connection) {
+    connection.close();
+    connection = null;
+  }
+
+  if (audioElement.value) {
+    audioElement.value.srcObject = null;
+  }
+
   isVisible.value = false;
 };
-
 const scrollToBottom = () => {
   const container = messagesContainer.value;
   if (container) {
