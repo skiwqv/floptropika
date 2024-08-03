@@ -293,6 +293,17 @@ export const useAppStore = defineStore("app", {
         );
       }
     },
+    sendCallRequest(message) {
+      if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+        this.websocket.send(
+          JSON.stringify({
+            type: "call_notification",
+            sender: message.sender.username,
+            recipient: message.recipient.username,
+          })
+        );
+      }
+    },
     closeWebSocket() {
       if (this.websocket) {
         this.websocket.close();

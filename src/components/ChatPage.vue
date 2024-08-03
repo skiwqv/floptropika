@@ -16,7 +16,7 @@
         </div>
         <div>
           <img
-            @click="startCall"
+            @click="sendCallRequest"
             class="icon__call"
             src="../assets/images/phone-svgrepo-com.svg"
             alt="icon call"
@@ -120,9 +120,6 @@ const isVisible = ref(false);
 const isMicrophoneEnabled = ref(true);
 const audioElement = ref(null);
 
-let connection;
-let pc;
-
 const recipientId = route.query.recipientId;
 
 const microphoneIcon = computed(() => {
@@ -151,134 +148,21 @@ const sendMessage = async () => {
   await nextTick();
   scrollToBottom();
 };
-const startCall = async () => {
-  try {
-    console.log("Starting call...");
-    isVisible.value = true;
 
-    connection = new WebSocket(
-      `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
-    );
-
-    connection.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    connection.onopen = async () => {
-      console.log("WebSocket connection opened");
-
-      const peerConnectionConfig = {
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-      };
-      pc = new RTCPeerConnection(peerConnectionConfig);
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log("Sending ICE candidate:", event.candidate);
-          connection.send(
-            JSON.stringify({
-              type: "ice_candidate",
-              candidate: event.candidate,
-            })
-          );
-        }
-      };
-
-      pc.ontrack = (event) => {
-        console.log("ontrack event:", event);
-        if (event.streams && event.streams[0]) {
-          console.log("Received stream:", event.streams[0]);
-          if (audioElement.value) {
-            audioElement.value.srcObject = event.streams[0];
-            audioElement.value
-              .play()
-              .catch((error) => console.error("Audio play error:", error));
-          } else {
-            console.error("audioElement is null");
-          }
-        } else {
-          let inboundStream = new MediaStream();
-          event.track.onunmute = () => {
-            inboundStream.addTrack(event.track);
-            console.log("Adding track to inboundStream:", event.track);
-            if (audioElement.value) {
-              audioElement.value.srcObject = inboundStream;
-              audioElement.value
-                .play()
-                .catch((error) => console.error("Audio play error:", error));
-            } else {
-              console.error("audioElement is null");
-            }
-          };
-        }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (!stream) {
-        console.error("Failed to get media stream");
-        return;
-      }
-      console.log("Got local media stream:", stream);
-
-      stream.getTracks().forEach((track) => {
-        console.log("Adding local track:", track);
-        pc.addTrack(track, stream);
-      });
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      connection.send(JSON.stringify({ type: "offer", sdp: offer.sdp }));
-      console.log("Sent offer:", offer);
-
-      connection.onmessage = async (event) => {
-        const message = JSON.parse(event.data);
-        console.log("Received message:", message);
-
-        if (message.type === "offer") {
-          console.log("Received offer:", message);
-          await pc.setRemoteDescription(new RTCSessionDescription(message));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          connection.send(JSON.stringify({ type: "answer", sdp: answer.sdp }));
-          console.log("Sent answer:", answer);
-        } else if (message.type === "answer") {
-          console.log("Received answer:", message);
-          await pc.setRemoteDescription(new RTCSessionDescription(message));
-        } else if (message.type === "ice-candidate") {
-          try {
-            console.log("Received ICE candidate:", message.candidate);
-            await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
-          } catch (e) {
-            console.error("Error adding received ice candidate", e);
-          }
-        }
-      };
-    };
-  } catch (error) {
-    console.error("Error in startCall:", error);
-  }
+const sendCallRequest = async () => {
+  const message = {
+    sender: currentUser.value,
+    recipient: profileUser.value,
+  };
+  appStore.sendCallRequest(message);
+  await nextTick();
+  scrollToBottom();
+  isVisible.value = true;
 };
 
-const endCall = () => {
-  console.log("Ending call...");
+// const startCall = async () => {};
 
-  if (pc) {
-    pc.getSenders().forEach((sender) => sender.track.stop());
-    pc.close();
-    pc = null;
-  }
-
-  if (connection) {
-    connection.close();
-    connection = null;
-  }
-
-  if (audioElement.value) {
-    audioElement.value.srcObject = null;
-  }
-
-  isVisible.value = false;
-};
+const endCall = () => {};
 const scrollToBottom = () => {
   const container = messagesContainer.value;
   if (container) {

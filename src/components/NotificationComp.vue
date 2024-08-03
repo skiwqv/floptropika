@@ -1,28 +1,64 @@
 <template>
   <div class="notifications">
     <transition-group name="fade" tag="div" class="notifications__list">
-      <div
-        v-for="notification in notifications"
-        :key="notification"
-        class="notification"
-        @click="toChat(notification)"
-      >
-        <div class="notification__header">
-          <img
-            :src="
-              notification.sender_avatar
-                ? notification.sender_avatar
-                : require('../assets/images/placeholder.png')
-            "
-            alt="User Avatar"
-            class="notification__avatar"
-          />
-          <span class="notification__username">{{
-            notification.sender_username
-          }}</span>
+      <div v-for="notification in notifications" :key="notification">
+        <div
+          v-if="notification.type == 'notification'"
+          class="notification"
+          @click="toChat(notification)"
+        >
+          <div class="notification__header">
+            <img
+              :src="
+                notification.sender_avatar
+                  ? notification.sender_avatar
+                  : require('../assets/images/placeholder.png')
+              "
+              alt="User Avatar"
+              class="notification__avatar"
+            />
+            <span class="notification__username">{{
+              notification.sender_username
+            }}</span>
+          </div>
+          <div class="notification__body">
+            <p>{{ notification.notification }}</p>
+          </div>
         </div>
-        <div class="notification__body">
-          <p>{{ notification.notification }}</p>
+        <div
+          v-if="notification.type == 'call_notification'"
+          class="notification-call"
+        >
+          <div class="notification__header">
+            <img
+              :src="
+                notification.sender_avatar
+                  ? notification.sender_avatar
+                  : require('../assets/images/placeholder.png')
+              "
+              alt="User Avatar"
+              class="notification__avatar"
+            />
+            <span class="notification__username">{{
+              notification.sender_username
+            }}</span>
+          </div>
+          <div class="notification__body-call">
+            <div class="icon-wrapper-green">
+              <img
+                src="../assets/images/phone-svgrepo-com.svg"
+                alt="answer call"
+                class="contol-icon"
+              />
+            </div>
+            <div class="icon-wrapper-red" @click="rejectCall">
+              <img
+                src="../assets/images/call-cancel-svgrepo-com.svg"
+                alt="reject call"
+                class="contol-icon"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </transition-group>
@@ -39,6 +75,7 @@ const appStore = useAppStore();
 const currentUser = computed(() => appStore.getUser);
 const notifications = ref([]);
 const lastNotification = ref(null);
+const isRejected = ref(false);
 
 const getSound = computed(() => appStore.getSound);
 const route = useRoute();
@@ -47,22 +84,40 @@ const addNotification = (notification) => {
   if (route.path.startsWith("/room")) {
     return;
   }
-
   if (lastNotification.value !== notification) {
-    notifications.value.unshift(notification);
-    const audio = new Audio(require("@/assets/sounds/poosay.mp3"));
-    if (getSound.value == true) {
-      audio.play();
-    } else {
-      audio.muted;
+    if (notification.type == "notification") {
+      notifications.value.unshift(notification);
+      const audio = new Audio(require("@/assets/sounds/poosay.mp3"));
+      if (getSound.value == true) {
+        audio.play();
+      } else {
+        audio.muted;
+      }
+      setTimeout(() => {
+        notifications.value.pop();
+      }, 3000);
+      lastNotification.value = notification;
     }
-    setTimeout(() => {
-      notifications.value.pop();
-    }, 3000);
-    lastNotification.value = notification;
+    if (notification.type == "call_notification") {
+      notifications.value.unshift(notification);
+      const audio = new Audio(require("@/assets/sounds/ringtone.mp3"));
+      if (getSound.value == true) {
+        setInterval(() => {
+          if (!isRejected.value) audio.play();
+        }, 4000);
+      } else {
+        audio.muted;
+      }
+      setTimeout(() => {
+        notifications.value.pop();
+      }, 60000);
+    }
   }
 };
-
+const rejectCall = () => {
+  notifications.value.pop();
+  isRejected.value = true;
+};
 let websocket = null;
 
 const initWebSocket = () => {
@@ -76,6 +131,7 @@ const initWebSocket = () => {
     websocket.send(
       JSON.stringify({
         type: "notification",
+        sender: currentUser.value,
       })
     );
   };
@@ -117,7 +173,6 @@ watch(route, () => {
 <style scoped>
 .notifications {
   position: fixed;
-  cursor: pointer;
   top: 20px;
   right: 20px;
   display: flex;
@@ -138,9 +193,17 @@ watch(route, () => {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   padding: 10px;
   width: 300px;
+  cursor: pointer;
   transition: opacity 0.5s ease;
 }
-
+.notification-call {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  width: 300px;
+  transition: opacity 0.5s ease;
+}
 .notification__header {
   display: flex;
   align-items: center;
@@ -188,5 +251,37 @@ watch(route, () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+.notification__body-call {
+  display: flex;
+  gap: 30px;
+}
+.icon-wrapper-green,
+.icon-wrapper-red {
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+.icon-wrapper-green {
+  background-color: rgb(0, 178, 0);
+}
+.icon-wrapper-green:hover {
+  background-color: rgb(0, 255, 47);
+}
+
+.icon-wrapper-red {
+  background-color: rgb(197, 0, 0);
+}
+.icon-wrapper-red:hover {
+  background-color: #ff0000;
+}
+.contol-icon {
+  width: 30px;
+  height: 30px;
 }
 </style>
