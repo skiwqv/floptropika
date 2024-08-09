@@ -44,7 +44,7 @@
             }}</span>
           </div>
           <div class="notification__body-call">
-            <div class="icon-wrapper-green">
+            <div class="icon-wrapper-green" @click="answerCall(notification)">
               <img
                 src="../assets/images/phone-svgrepo-com.svg"
                 alt="answer call"
@@ -70,8 +70,10 @@ import { ref, onMounted, computed, watch } from "vue";
 import { useAppStore } from "@/store/app.js";
 import { useRoute } from "vue-router";
 import router from "@/router";
+import { useCallStore } from "@/store/callStore";
 
 const appStore = useAppStore();
+const callStore = useCallStore();
 const currentUser = computed(() => appStore.getUser);
 const notifications = ref([]);
 const lastNotification = ref(null);
@@ -117,6 +119,11 @@ const addNotification = (notification) => {
 const rejectCall = () => {
   notifications.value.pop();
   isRejected.value = true;
+};
+const answerCall = async (id) => {
+  callStore.answerHandler();
+  toChat(id);
+  await appStore.visibleHandler();
 };
 let websocket = null;
 

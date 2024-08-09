@@ -77,7 +77,7 @@
     </div>
     <div v-if="isVisible" class="modal">
       <div class="modal-content">
-        <div class="call__wrapper">
+        <!-- <div class="call__wrapper">
           <img
             :src="
               profileUser.avatar || require('../assets/images/placeholder.png')
@@ -86,7 +86,7 @@
             class="call-avatar"
           />
           <h3>{{ profileUser.username }}</h3>
-        </div>
+        </div> -->
         <div class="control__wrapper">
           <div class="microphone__icon-wrapper" @click="toggleMicrophone">
             <img :src="microphoneIcon" class="microphone__icon" />
@@ -98,7 +98,7 @@
             />
           </div>
         </div>
-        <audio ref="audioElement" autoplay></audio>
+        <audio autoplay ref="audioElement"></audio>
       </div>
     </div>
   </div>
@@ -106,22 +106,26 @@
 
 <script setup>
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
-import { useAppStore } from "@/store/app.js";
 import { useRoute } from "vue-router";
+import { useAppStore } from "@/store/app";
+import { useCallStore } from "@/store/callStore";
 
 const appStore = useAppStore();
+const callStore = useCallStore;
 const route = useRoute();
 const currentUser = computed(() => appStore.getUser);
 const profileUser = computed(() => appStore.profileUser);
 const messages = computed(() => appStore.chatMessages);
 const newMessage = ref("");
 const messagesContainer = ref(null);
-const isVisible = ref(false);
 const isMicrophoneEnabled = ref(true);
 const audioElement = ref(null);
+import router from "@/router";
 
 const recipientId = route.query.recipientId;
 
+const isVisible = computed(() => appStore.isVisible);
+const isAnswered = computed(() => callStore.isAnswered);
 const microphoneIcon = computed(() => {
   return isMicrophoneEnabled.value
     ? require("../assets/images/microphone-svgrepo-com.svg")
@@ -154,15 +158,114 @@ const sendCallRequest = async () => {
     sender: currentUser.value,
     recipient: profileUser.value,
   };
+
   appStore.sendCallRequest(message);
-  await nextTick();
-  scrollToBottom();
-  isVisible.value = true;
+  appStore.visibleHandler();
+
+  router.push({
+    path: route.path,
+    query: {
+      ...route.query,
+      initiator: true,
+    },
+  });
 };
 
-// const startCall = async () => {};
+let peerConnection;
+let connection;
 
-const endCall = () => {};
+function startCall() {
+  connection = new WebSocket(
+    `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
+  );
+
+  const configuration = {
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  };
+  peerConnection = new RTCPeerConnection(configuration);
+
+  // Handle ICE candidates
+  peerConnection.onicecandidate = function (event) {
+    if (event.candidate) {
+      connection.send(
+        JSON.stringify({ type: "candidate", candidate: event.candidate })
+      );
+    }
+  };
+
+  // Once remote track media is received, display it
+  peerConnection.ontrack = function (event) {
+    audioElement.value.srcObject = event.streams[0];
+  };
+
+  // Get local audio stream
+  navigator.mediaDevices
+    .getUserMedia({ audio: true }) // Removed video, only audio remains
+    .then((stream) => {
+      audioElement.value.srcObject = stream;
+      stream
+        .getTracks()
+        .forEach((track) => peerConnection.addTrack(track, stream));
+    })
+    .catch((error) => console.error("Error accessing media devices.", error));
+
+  // WebSocket event listeners
+  connection.onopen = function () {
+    console.log("WebSocket connection established");
+  };
+
+  connection.onmessage = function (message) {
+    const data = JSON.parse(message.data);
+    handleSignalingData(data);
+  };
+
+  connection.onerror = function (error) {
+    console.error("WebSocket error: ", error);
+  };
+
+  connection.onclose = function () {
+    console.log("WebSocket connection closed");
+  };
+}
+
+// Handling signaling data received via WebSocket
+function handleSignalingData(data) {
+  switch (data.type) {
+    case "offer":
+      handleOffer(data.offer);
+      break;
+    case "answer":
+      handleAnswer(data.answer);
+      break;
+    case "candidate":
+      handleCandidate(data.candidate);
+      break;
+    default:
+      break;
+  }
+}
+
+function handleOffer(offer) {
+  peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+  // create an answer to send back to the peer
+  peerConnection.createAnswer().then((answer) => {
+    peerConnection.setLocalDescription(answer);
+    connection.send(JSON.stringify({ type: "answer", answer: answer }));
+  });
+}
+
+function handleAnswer(answer) {
+  peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+}
+
+function handleCandidate(candidate) {
+  peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+}
+
+const endCall = () => {
+  appStore.visibleHandler();
+};
+
 const scrollToBottom = () => {
   const container = messagesContainer.value;
   if (container) {
@@ -181,6 +284,9 @@ onMounted(async () => {
     profileUser.value
   );
   scrollToBottom();
+  setTimeout(() => {
+    startCall();
+  }, 3000);
 });
 
 onUnmounted(() => {
@@ -194,6 +300,15 @@ watch(
     scrollToBottom();
   },
   { immediate: true, deep: true, flush: "post" }
+);
+watch(
+  isVisible.value,
+  async () => {
+    if (isAnswered.value) {
+      startCall();
+    }
+  },
+  { immediate: true, deep: true }
 );
 </script>
 

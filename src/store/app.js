@@ -22,6 +22,7 @@ export const useAppStore = defineStore("app", {
     messages: [],
     isSound: false,
     resentChats: [],
+    isVisible: false,
   }),
   getters: {
     getUser: (state) => state.currentUser,
@@ -230,15 +231,15 @@ export const useAppStore = defineStore("app", {
             sender: sender.username,
             recipient: res.username,
           });
-          const markAsReadMessage = JSON.stringify({
-            type: "mark_as_read",
-            sender: sender.username,
-            recipient: res.username,
-          });
+          // const markAsReadMessage = JSON.stringify({
+          //   type: "mark_as_read",
+          //   sender: sender.username,
+          //   recipient: res.username,
+          // });
 
           this.websocket.send(getUsersMessage);
 
-          this.websocket.send(markAsReadMessage);
+          // this.websocket.send(markAsReadMessage);
         }
       };
 
@@ -311,6 +312,10 @@ export const useAppStore = defineStore("app", {
     },
     soundHandler() {
       this.isSound = !this.isSound;
+    },
+    visibleHandler() {
+      this.isVisible = !this.isVisible;
+      console.log("isVisible", this.isVisible);
     },
     async setRessentChats() {
       this.isLoading = true;
