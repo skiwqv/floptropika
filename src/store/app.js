@@ -256,13 +256,12 @@ export const useAppStore = defineStore("app", {
           });
 
           if (data.sender !== this.currentUser.username) {
-            const markAsReadIncomingMessage = JSON.stringify({
-              type: "mark_as_read",
-              sender: this.currentUser.username,
-              recipient: res.username,
-            });
-
-            this.websocket.send(markAsReadIncomingMessage);
+            // const markAsReadIncomingMessage = JSON.stringify({
+            //   type: "mark_as_read",
+            //   sender: this.currentUser.username,
+            //   recipient: res.username,
+            // });
+            // this.websocket.send(markAsReadIncomingMessage);
           }
         } else if (data.type === "messages_marked_as_read") {
           this.messages.forEach((msg) => {

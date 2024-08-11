@@ -1,6 +1,7 @@
 <template>
   <div class="chat-room__wrapper" v-if="currentUser">
     <div class="chat-room">
+      <!-- Шапка чата -->
       <div v-if="profileUser" class="chat-room__header">
         <div class="user__wrapper">
           <img
@@ -23,6 +24,8 @@
           />
         </div>
       </div>
+
+      <!-- Сообщения чата -->
       <div class="chat-room__messages" ref="messagesContainer">
         <div
           v-for="message in messages"
@@ -62,6 +65,8 @@
           </div>
         </div>
       </div>
+
+      <!-- Ввод сообщений -->
       <div class="chat-room__input-container">
         <input
           v-model="newMessage"
@@ -75,18 +80,10 @@
         </button>
       </div>
     </div>
+
+    <!-- Модальное окно звонка -->
     <div v-if="isVisible" class="modal">
       <div class="modal-content">
-        <!-- <div class="call__wrapper">
-          <img
-            :src="
-              profileUser.avatar || require('../assets/images/placeholder.png')
-            "
-            alt="User Avatar"
-            class="call-avatar"
-          />
-          <h3>{{ profileUser.username }}</h3>
-        </div> -->
         <div class="control__wrapper">
           <div class="microphone__icon-wrapper" @click="toggleMicrophone">
             <img :src="microphoneIcon" class="microphone__icon" />
@@ -111,7 +108,7 @@ import { useAppStore } from "@/store/app";
 import { useCallStore } from "@/store/callStore";
 
 const appStore = useAppStore();
-const callStore = useCallStore;
+const callStore = useCallStore();
 const route = useRoute();
 const currentUser = computed(() => appStore.getUser);
 const profileUser = computed(() => appStore.profileUser);
@@ -123,7 +120,6 @@ const audioElement = ref(null);
 import router from "@/router";
 
 const recipientId = route.query.recipientId;
-
 const isVisible = computed(() => appStore.isVisible);
 const isAnswered = computed(() => callStore.isAnswered);
 const microphoneIcon = computed(() => {
@@ -171,99 +167,166 @@ const sendCallRequest = async () => {
   });
 };
 
-let peerConnection;
-let connection;
+const openMediaDevices = async (constraints) => {
+  return await navigator.mediaDevices.getUserMedia(constraints);
+};
 
-function startCall() {
-  connection = new WebSocket(
-    `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
-  );
+const startCall = async () => {
+  try {
+    const connection = new WebSocket(
+      `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
+    );
 
-  const configuration = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  };
-  peerConnection = new RTCPeerConnection(configuration);
+    connection.onopen = async () => {
+      console.log("WebSocket connection opened");
 
-  // Handle ICE candidates
-  peerConnection.onicecandidate = function (event) {
-    if (event.candidate) {
-      connection.send(
-        JSON.stringify({ type: "candidate", candidate: event.candidate })
-      );
-    }
-  };
+      const stream = await openMediaDevices({ audio: true });
+      console.log("Got MediaStream:", stream);
 
-  // Once remote track media is received, display it
-  peerConnection.ontrack = function (event) {
-    audioElement.value.srcObject = event.streams[0];
-  };
+      const configuration = {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      };
+      const peerConnection = new RTCPeerConnection(configuration);
 
-  // Get local audio stream
-  navigator.mediaDevices
-    .getUserMedia({ audio: true }) // Removed video, only audio remains
-    .then((stream) => {
-      audioElement.value.srcObject = stream;
       stream
         .getTracks()
         .forEach((track) => peerConnection.addTrack(track, stream));
-    })
-    .catch((error) => console.error("Error accessing media devices.", error));
 
-  // WebSocket event listeners
-  connection.onopen = function () {
-    console.log("WebSocket connection established");
-  };
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
 
-  connection.onmessage = function (message) {
-    const data = JSON.parse(message.data);
-    handleSignalingData(data);
-  };
+      connection.send(
+        JSON.stringify({
+          type: "offer",
+          sdp: peerConnection.localDescription,
+        })
+      );
 
-  connection.onerror = function (error) {
-    console.error("WebSocket error: ", error);
-  };
+      connection.onmessage = async (event) => {
+        const message = JSON.parse(event.data);
 
-  connection.onclose = function () {
-    console.log("WebSocket connection closed");
-  };
-}
+        if (message.type === "answer") {
+          const remoteDesc = new RTCSessionDescription(message.sdp);
+          await peerConnection.setRemoteDescription(remoteDesc);
+        } else if (message.type === "ice_candidate" && message.candidate) {
+          try {
+            await peerConnection.addIceCandidate(
+              new RTCIceCandidate(message.candidate)
+            );
+          } catch (e) {
+            console.error("Error adding received ice candidate", e);
+          }
+        }
+      };
 
-// Handling signaling data received via WebSocket
-function handleSignalingData(data) {
-  switch (data.type) {
-    case "offer":
-      handleOffer(data.offer);
-      break;
-    case "answer":
-      handleAnswer(data.answer);
-      break;
-    case "candidate":
-      handleCandidate(data.candidate);
-      break;
-    default:
-      break;
+      peerConnection.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        console.log("Received Remote Stream:", remoteStream);
+        audioElement.value.srcObject = remoteStream;
+        audioElement.value.play();
+      };
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          connection.send(
+            JSON.stringify({
+              type: "ice_candidate",
+              candidate: event.candidate,
+            })
+          );
+        }
+      };
+    };
+  } catch (error) {
+    console.error(
+      "Error accessing media devices or setting up the call:",
+      error
+    );
   }
-}
+};
 
-function handleOffer(offer) {
-  peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-  // create an answer to send back to the peer
-  peerConnection.createAnswer().then((answer) => {
-    peerConnection.setLocalDescription(answer);
-    connection.send(JSON.stringify({ type: "answer", answer: answer }));
-  });
-}
+const answerCall = async () => {
+  try {
+    console.log("AnswerCall is starting...");
 
-function handleAnswer(answer) {
-  peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-}
+    const connection = new WebSocket(
+      `wss://flopproject-1.onrender.com/ws/call/${route.params.roomName}/?token=${appStore.accessToken}`
+    );
 
-function handleCandidate(candidate) {
-  peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-}
+    connection.onopen = async () => {
+      console.log("WebSocket connected for answering...");
+
+      connection.onmessage = async (event) => {
+        const message = JSON.parse(event.data);
+        console.log("Received message:", message);
+
+        if (message.type === "offer") {
+          const remoteDesc = new RTCSessionDescription(message.sdp);
+          await peerConnection.setRemoteDescription(remoteDesc);
+          console.log("Set remote description for answer...");
+
+          const stream = await openMediaDevices({ audio: true });
+          console.log("Got MediaStream:", stream);
+
+          stream
+            .getTracks()
+            .forEach((track) => peerConnection.addTrack(track, stream));
+
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          console.log("Created and set local description for answer...");
+
+          connection.send(
+            JSON.stringify({
+              type: "answer",
+              sdp: peerConnection.localDescription,
+            })
+          );
+          console.log("Sent answer through WebSocket...");
+        } else if (message.type === "ice_candidate" && message.candidate) {
+          try {
+            await peerConnection.addIceCandidate(
+              new RTCIceCandidate(message.candidate)
+            );
+            console.log("Added received ice candidate...");
+          } catch (e) {
+            console.error("Error adding received ice candidate", e);
+          }
+        }
+      };
+
+      peerConnection.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        console.log("Received Remote Stream:", remoteStream);
+        audioElement.value.srcObject = remoteStream;
+        audioElement.value.play();
+      };
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          connection.send(
+            JSON.stringify({
+              type: "ice_candidate",
+              candidate: event.candidate,
+            })
+          );
+          console.log("Sent ICE candidate...");
+        }
+      };
+    };
+
+    const configuration = {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    };
+    const peerConnection = new RTCPeerConnection(configuration);
+  } catch (error) {
+    console.error("Error in answerCall:", error);
+  }
+};
 
 const endCall = () => {
   appStore.visibleHandler();
+  // здесь можно добавить логику закрытия соединения
 };
 
 const scrollToBottom = () => {
@@ -283,10 +346,10 @@ onMounted(async () => {
     currentUser.value,
     profileUser.value
   );
+  if (isAnswered.value == true) {
+    await answerCall();
+  }
   scrollToBottom();
-  setTimeout(() => {
-    startCall();
-  }, 3000);
 });
 
 onUnmounted(() => {
@@ -301,11 +364,25 @@ watch(
   },
   { immediate: true, deep: true, flush: "post" }
 );
+
+const shouldStartCall = ref(false);
+
 watch(
-  isVisible.value,
-  async () => {
-    if (isAnswered.value) {
-      startCall();
+  [isVisible, () => route.query.initiator, isAnswered],
+  async ([isVisible, initiator, isAnswered]) => {
+    console.log("Watch triggered with values:", {
+      isVisible,
+      initiator,
+      isAnswered,
+    });
+
+    if (isVisible) {
+      if (initiator === "true" && !shouldStartCall.value) {
+        shouldStartCall.value = true;
+        console.log("Starting call...");
+        await nextTick();
+        await startCall();
+      }
     }
   },
   { immediate: true, deep: true }
