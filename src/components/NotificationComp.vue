@@ -123,7 +123,6 @@ const rejectCall = () => {
 const answerCall = async (id) => {
   callStore.answerHandler();
   toChat(id);
-  await appStore.visibleHandler();
 };
 let websocket = null;
 

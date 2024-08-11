@@ -347,6 +347,14 @@ onMounted(async () => {
     profileUser.value
   );
   if (isAnswered.value == true) {
+    appStore.visibleHandler();
+    router.push({
+      path: route.path,
+      query: {
+        ...route.query,
+        initiator: false,
+      },
+    });
     await answerCall();
   }
   scrollToBottom();
@@ -365,8 +373,6 @@ watch(
   { immediate: true, deep: true, flush: "post" }
 );
 
-const shouldStartCall = ref(false);
-
 watch(
   [isVisible, () => route.query.initiator, isAnswered],
   async ([isVisible, initiator, isAnswered]) => {
@@ -377,9 +383,10 @@ watch(
     });
 
     if (isVisible) {
-      if (initiator === "true" && !shouldStartCall.value) {
-        shouldStartCall.value = true;
+      if (initiator === "false") {
         console.log("Starting call...");
+        await answerCall();
+      } else {
         await nextTick();
         await startCall();
       }
